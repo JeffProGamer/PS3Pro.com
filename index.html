@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PS3 Pro Site</title>
-  <link rel="stylesheet" href="css/output.css">
   <style>
     body {
       margin: 0;
@@ -82,6 +81,7 @@
     }
     .submenu.active {
       animation: slideIn 0.4s ease;
+      display: block;
     }
     .submenu-item {
       transition: all 0.3s ease;
@@ -142,10 +142,6 @@
       transform: scale(1.1);
       filter: brightness(1.2);
     }
-    #login-form button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
     #login-message {
       margin-top: 10px;
       color: #f00;
@@ -155,13 +151,13 @@
       from { transform: translateX(-50%) translateY(-30px); opacity: 0; }
       to { transform: translateX(-50%) translateY(0); opacity: 1; }
     }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
     @keyframes frameAnimation {
       0% { transform: translateX(0); }
       100% { transform: translateX(-256px); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
     .no-animations .xmb-item, .no-animations .submenu, .no-animations .submenu-item,
     .no-animations #login-form input, .no-animations #login-form select,
@@ -172,9 +168,6 @@
     .no-animations #background {
       animation: none !important;
     }
-    #xmb-container {
-      animation: fadeIn 0.5s ease;
-    }
   </style>
 </head>
 <body>
@@ -182,7 +175,7 @@
     <img src="https://via.placeholder.com/200?text=PS3+Pro+Site+Logo" alt="PS3 Pro Site Logo">
   </div>
   <div id="background"></div>
-  <div class="flex justify-center items-center h-screen relative hidden" id="xmb-container">
+  <div class="flex justify-center items-center h-screen relative" id="xmb-container">
     <h1 class="absolute top-4 left-4 text-2xl font-bold text-white/90">PS3 Pro Site</h1>
     <h2 id="user-welcome" class="absolute top-4 right-4 text-lg text-white/80"></h2>
     <div class="flex justify-around w-full absolute top-[20%] xmb-menu">
@@ -208,6 +201,7 @@
       </div>
     </div>
     <div class="absolute top-[30%] left-1/2 -translate-x-1/2 submenu active block" id="users-submenu">
+      <div class="p-2.5 m-1.25 cursor-pointer hover:bg-white/20 transition-colors duration-300 submenu-item" data-action="login">Sign In</div>
       <div class="p-2.5 m-1.25 cursor-pointer hover:bg-white/20 transition-colors duration-300 submenu-item" data-action="signout">Sign Out</div>
       <div class="p-2.5 m-1.25 cursor-pointer hover:bg-white/20 transition-colors duration-300 submenu-item" id="user-profile"></div>
     </div>
@@ -232,45 +226,93 @@
       <div class="p-2.5 m-1.25 cursor-pointer hover:bg-white/20 transition-colors duration-300 submenu-item">PlayStation Store</div>
     </div>
     <canvas id="game-canvas" width="800" height="600"></canvas>
-  </div>
-  <div id="login-screen" class="active">
-    <div id="login-form">
-      <h2 class="text-xl font-bold mb-4">Sign In to PS3 Pro Site</h2>
-      <input type="text" id="username" placeholder="Email or PSN ID" class="mb-4">
-      <input type="password" id="password" placeholder="Password" class="mb-4">
-      <select id="provider" class="mb-4">
-        <option value="hotmail">Hotmail/Outlook</option>
-        <option value="gmail">Gmail</option>
-        <option value="psn">PSN</option>
-      </select>
-      <div class="flex justify-center gap-2">
-        <button id="signin-btn" class="bg-blue-600 hover:bg-blue-700 text-white" onclick="signIn()">Sign In</button>
-        <button class="bg-gray-600 hover:bg-gray-700 text-white" onclick="cancelSignIn()">Cancel</button>
+    <div id="login-screen">
+      <div id="login-form">
+        <h2 class="text-xl font-bold mb-4">Sign In to PS3 Pro Site</h2>
+        <input type="text" id="username" placeholder="Email or PSN ID" class="mb-4">
+        <input type="password" id="password" placeholder="Password" class="mb-4">
+        <select id="provider" class="mb-4">
+          <option value="psn">PSN</option>
+          <option value="gmail">Google</option>
+          <option value="hotmail">Hotmail</option>
+        </select>
+        <div class="flex justify-center gap-2">
+          <button class="bg-blue-600 hover:bg-blue-700 text-white" onclick="signIn()">Sign In</button>
+          <button class="bg-gray-600 hover:bg-gray-700 text-white" onclick="cancelSignIn()">Cancel</button>
+        </div>
+        <p id="login-message"></p>
       </div>
-      <p id="login-message"></p>
     </div>
   </div>
   <script>
-    // User Management
+    // Constants
+    const API_URL = 'http://localhost:3000';
+    let token = null;
     let user = null;
-    const backendUrl = 'http://localhost:3000';
-    const xmbContainer = document.getElementById('xmb-container');
-    const loginScreen = document.getElementById('login-screen');
+    let snakeHighScore = 0;
+    let platformerHighScore = 0;
+
+    // DOM Elements
     const userWelcome = document.getElementById('user-welcome');
     const userProfile = document.getElementById('user-profile');
     const background = document.getElementById('background');
-    const signinBtn = document.getElementById('signin-btn');
+    const xmbContainer = document.getElementById('xmb-container');
+    const loginScreen = document.getElementById('login-screen');
 
-    const validateCredentials = (username, provider) => {
-      if (provider === 'psn') {
-        return /^[a-zA-Z0-9_-]{3,16}$/.test(username);
-      } else {
-        return provider === 'hotmail' ? /^[\w-\.]+@(hotmail|outlook)\.com$/.test(username) :
-               provider === 'gmail' ? /^[\w-\.]+@gmail\.com$/.test(username) : false;
+    // API Helper
+    async function apiRequest(endpoint, method = 'GET', body = null, auth = true) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (auth && token) headers['Authorization'] = `Bearer ${token}`;
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null
+      });
+      return response.json();
+    }
+
+    // User Management
+    async function loadUserData() {
+      if (token) {
+        try {
+          const userData = await apiRequest('/user');
+          const savedData = await apiRequest('/load');
+          user = {
+            username: userData.username,
+            provider: userData.provider,
+            theme: savedData.theme || 'default',
+            animations: savedData.animations !== undefined ? savedData.animations : true,
+            fastMode: savedData.fastMode || false
+          };
+          snakeHighScore = savedData.snakeHighScore || 0;
+          platformerHighScore = savedData.platformerHighScore || 0;
+          updateUserUI();
+        } catch (e) {
+          console.error('Failed to load user data:', e);
+          token = null;
+          user = null;
+          updateUserUI();
+        }
       }
-    };
+    }
 
-    const updateUserUI = () => {
+    async function saveUserData() {
+      if (user && token) {
+        try {
+          await apiRequest('/save', 'POST', {
+            theme: user.theme,
+            animations: user.animations,
+            fastMode: user.fastMode,
+            snakeHighScore,
+            platformerHighScore
+          });
+        } catch (e) {
+          console.error('Failed to save user data:', e);
+        }
+      }
+    }
+
+    function updateUserUI() {
       if (user) {
         userWelcome.textContent = `Welcome, ${user.username}`;
         userProfile.textContent = `${user.username}'s Profile`;
@@ -283,184 +325,61 @@
         userProfile.textContent = 'Guest';
         background.className = 'theme-default';
         document.body.classList.remove('no-animations');
+        document.querySelector('[data-setting="animations"]').textContent = `Animations: On`;
+        document.querySelector('[data-setting="fastMode"]').textContent = `Fast Mode: Off`;
       }
-    };
-
-    const saveUserData = async () => {
-      try {
-        localStorage.setItem('ps3ProUserSettings', JSON.stringify({
-          theme: user.theme,
-          animations: user.animations,
-          fastMode: user.fastMode,
-          snakeHighScore: user.snakeHighScore || 0,
-          platformerHighScore: user.platformerHighScore || 0
-        }));
-        const token = localStorage.getItem('ps3ProToken');
-        if (token) {
-          await fetch(`${backendUrl}/save`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({
-              theme: user.theme,
-              animations: user.animations,
-              fastMode: user.fastMode,
-              snakeHighScore: user.snakeHighScore || 0,
-              platformerHighScore: user.platformerHighScore || 0
-            })
-          });
-        }
-      } catch (e) {
-        console.warn('Failed to save user data:', e);
-      }
-    };
+    }
 
     window.signIn = async () => {
-      signinBtn.disabled = true;
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
       const provider = document.getElementById('provider').value;
       const message = document.getElementById('login-message');
-
-      if (!username || !password) {
+      if (username && password) {
+        try {
+          const response = await apiRequest('/signin', 'POST', { username, password, provider }, false);
+          if (response.token) {
+            token = response.token;
+            await loadUserData();
+            message.textContent = `Signed in with ${provider} as ${username}`;
+            message.style.color = '#0f0';
+            setTimeout(() => {
+              loginScreen.classList.remove('active');
+              xmbContainer.classList.remove('hidden');
+            }, 1000);
+          } else {
+            message.textContent = response.error || 'Sign-in failed';
+            message.style.color = '#f00';
+          }
+        } catch (e) {
+          message.textContent = 'Error connecting to server';
+          message.style.color = '#f00';
+        }
+      } else {
         message.textContent = 'Please enter username and password';
         message.style.color = '#f00';
-        signinBtn.disabled = false;
-        return;
-      }
-
-      if (!validateCredentials(username, provider)) {
-        message.textContent = 'Invalid email or PSN ID';
-        message.style.color = '#f00';
-        signinBtn.disabled = false;
-        return;
-      }
-
-      try {
-        const ping = await fetch(`${backendUrl}/ping`);
-        if (!ping.ok) {
-          message.textContent = 'Server unreachable';
-          message.style.color = '#f00';
-          signinBtn.disabled = false;
-          return;
-        }
-        const response = await fetch(`${backendUrl}/signin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, provider })
-        });
-        const data = await response.json();
-        if (data.token) {
-          try {
-            localStorage.setItem('ps3ProToken', data.token);
-          } catch (e) {
-            console.warn('Failed to save token to localStorage:', e);
-          }
-          user = {
-            username,
-            provider,
-            theme: 'default',
-            animations: true,
-            fastMode: false,
-            snakeHighScore: 0,
-            platformerHighScore: 0
-          };
-          const loadResponse = await fetch(`${backendUrl}/load`, {
-            headers: { 'Authorization': `Bearer ${data.token}` }
-          });
-          if (loadResponse.ok) {
-            const savedData = await loadResponse.json();
-            user.theme = savedData.theme || 'default';
-            user.animations = savedData.animations ?? true;
-            user.fastMode = savedData.fastMode ?? false;
-            user.snakeHighScore = savedData.snakeHighScore || 0;
-            user.platformerHighScore = savedData.platformerHighScore || 0;
-          }
-          saveUserData();
-          message.textContent = `Signed in as ${username}`;
-          message.style.color = '#0f0';
-          setTimeout(() => {
-            loginScreen.remove();
-            xmbContainer.classList.remove('hidden');
-            updateUserUI();
-            signinBtn.disabled = false;
-          }, 1000);
-        } else {
-          message.textContent = data.error || 'Sign-in failed';
-          message.style.color = '#f00';
-          signinBtn.disabled = false;
-        }
-      } catch (e) {
-        message.textContent = 'Error connecting to server';
-        message.style.color = '#f00';
-        console.warn('Sign-in error:', e);
-        signinBtn.disabled = false;
       }
     };
 
     window.cancelSignIn = () => {
-      document.getElementById('username').value = '';
-      document.getElementById('password').value = '';
-      document.getElementById('login-message').textContent = '';
-      signinBtn.disabled = false;
-    };
-
-    const verifySession = async () => {
-      try {
-        const token = localStorage.getItem('ps3ProToken');
-        if (!token) return false;
-        const response = await fetch(`${backendUrl}/verify`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const userResponse = await fetch(`${backendUrl}/user`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            const loadResponse = await fetch(`${backendUrl}/load`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const savedData = loadResponse.ok ? await loadResponse.json() : {};
-            user = {
-              username: userData.username,
-              provider: userData.provider,
-              theme: savedData.theme || 'default',
-              animations: savedData.animations ?? true,
-              fastMode: savedData.fastMode ?? false,
-              snakeHighScore: savedData.snakeHighScore || 0,
-              platformerHighScore: savedData.platformerHighScore || 0
-            };
-            loginScreen.remove();
-            xmbContainer.classList.remove('hidden');
-            updateUserUI();
-            return true;
-          }
-        }
-        localStorage.removeItem('ps3ProToken');
-      } catch (e) {
-        console.warn('Session verification failed:', e);
-      }
-      return false;
+      loginScreen.classList.remove('active');
+      xmbContainer.classList.remove('hidden');
     };
 
     document.querySelector('.submenu-item[data-action="signout"]').addEventListener('click', () => {
-      try {
-        localStorage.removeItem('ps3ProToken');
-        localStorage.removeItem('ps3ProUserSettings');
-      } catch (e) {
-        console.warn('Failed to clear localStorage:', e);
-      }
+      token = null;
       user = null;
-      window.location.reload();
+      snakeHighScore = 0;
+      platformerHighScore = 0;
+      updateUserUI();
     });
 
     document.querySelectorAll('.submenu-item[data-theme]').forEach(item => {
       item.addEventListener('click', () => {
         if (user) {
           user.theme = item.dataset.theme;
-          saveUserData();
           updateUserUI();
+          saveUserData();
         }
       });
     });
@@ -468,16 +387,16 @@
     document.querySelector('[data-setting="animations"]').addEventListener('click', () => {
       if (user) {
         user.animations = !user.animations;
-        saveUserData();
         updateUserUI();
+        saveUserData();
       }
     });
 
     document.querySelector('[data-setting="fastMode"]').addEventListener('click', () => {
       if (user) {
         user.fastMode = !user.fastMode;
-        saveUserData();
         updateUserUI();
+        saveUserData();
       }
     });
 
@@ -496,13 +415,59 @@
     };
     testPerformance();
 
+    // XMB Navigation
+    const items = document.querySelectorAll('.xmb-item');
+    const submenus = document.querySelectorAll('.submenu');
+    const gameCanvas = document.getElementById('game-canvas');
+    let currentGame = null;
+
+    items.forEach(item => {
+      item.addEventListener('click', () => {
+        items.forEach(i => i.classList.remove('active', 'scale-125', 'opacity-100'));
+        item.classList.add('active', 'scale-125', 'opacity-100');
+        submenus.forEach(sm => sm.classList.remove('active', 'block'));
+        const menuId = item.dataset.menu + '-submenu';
+        document.getElementById(menuId).classList.add('active', 'block');
+        gameCanvas.classList.remove('active');
+        loginScreen.classList.remove('active');
+        if (currentGame) currentGame.stop();
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (loginScreen.classList.contains('active') && e.key === 'Escape') {
+        cancelSignIn();
+        return;
+      }
+      const activeItem = document.querySelector('.xmb-item.active');
+      const currentIndex = Array.from(items).indexOf(activeItem);
+      let newIndex;
+
+      if (e.key === 'ArrowRight') {
+        newIndex = (currentIndex + 1) % items.length;
+      } else if (e.key === 'ArrowLeft') {
+        newIndex = (currentIndex - 1 + items.length) % items.length;
+      }
+
+      if (newIndex !== undefined) {
+        items.forEach(i => i.classList.remove('active', 'scale-125', 'opacity-100'));
+        items[newIndex].classList.add('active', 'scale-125', 'opacity-100');
+        submenus.forEach(sm => sm.classList.remove('active', 'block'));
+        const menuId = items[newIndex].dataset.menu + '-submenu';
+        document.getElementById(menuId).classList.add('active', 'block');
+        gameCanvas.classList.remove('active');
+        loginScreen.classList.remove('active');
+        if (currentGame) currentGame.stop();
+      }
+    });
+
     // WebGL Setup
     let gl = null;
-    let ctx = document.getElementById('game-canvas').getContext('2d');
-    let program, positionLocation, normalLocation, modelMatrixLocation, viewMatrixLocation, projMatrixLocation, colorLocation, timeLocation;
+    let ctx = gameCanvas.getContext('2d');
+    let program, positionLocation, resolutionLocation, colorLocation, timeLocation;
 
     const initWebGL = () => {
-      gl = document.getElementById('game-canvas').getContext('webgl') || document.getElementById('game-canvas').getContext('experimental-webgl');
+      gl = gameCanvas.getContext('webgl') || gameCanvas.getContext('experimental-webgl');
       if (!gl) {
         console.warn('WebGL initialization failed, using Canvas 2D');
         useWebGL = false;
@@ -510,29 +475,24 @@
       }
 
       const vertexShaderSource = `
-        attribute vec3 a_position;
-        attribute vec3 a_normal;
-        uniform mat4 u_modelMatrix;
-        uniform mat4 u_viewMatrix;
-        uniform mat4 u_projMatrix;
+        attribute vec2 a_position;
+        uniform vec2 u_resolution;
         uniform float u_time;
-        varying vec3 v_normal;
         void main() {
-          float pulse = 0.95 + 0.05 * sin(u_time * 0.01);
-          gl_Position = u_projMatrix * u_viewMatrix * u_modelMatrix * vec4(a_position * pulse, 1.0);
-          v_normal = normalize((u_modelMatrix * vec4(a_normal, 0.0)).xyz);
+          vec2 zeroToOne = a_position / u_resolution;
+          vec2 zeroToTwo = zeroToOne * 2.0;
+          vec2 clipSpace = zeroToTwo - 1.0;
+          float pulse = 0.95 + 0.1 * sin(u_time * 0.01);
+          gl_Position = vec4(clipSpace * vec2(1, -1) * pulse, 0, 1);
         }
       `;
       const fragmentShaderSource = `
         precision mediump float;
         uniform vec4 u_color;
         uniform float u_time;
-        varying vec3 v_normal;
         void main() {
-          vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
-          float diff = max(dot(v_normal, lightDir), 0.2);
           float glow = 0.8 + 0.2 * sin(u_time * 0.01);
-          gl_FragColor = vec4(u_color.rgb * diff * glow, u_color.a);
+          gl_FragColor = vec4(u_color.rgb * glow, u_color.a);
         }
       `;
 
@@ -570,92 +530,30 @@
 
       gl.useProgram(program);
       positionLocation = gl.getAttribLocation(program, 'a_position');
-      normalLocation = gl.getAttribLocation(program, 'a_normal');
-      modelMatrixLocation = gl.getUniformLocation(program, 'u_modelMatrix');
-      viewMatrixLocation = gl.getUniformLocation(program, 'u_viewMatrix');
-      projMatrixLocation = gl.getUniformLocation(program, 'u_projMatrix');
+      resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
       colorLocation = gl.getUniformLocation(program, 'u_color');
       timeLocation = gl.getUniformLocation(program, 'u_time');
-
-      gl.enable(gl.DEPTH_TEST);
-      gl.viewport(0, 0, 800, 600);
-      const projMatrix = [
-        2 / 800, 0, 0, 0,
-        0, -2 / 600, 0, 0,
-        0, 0, -2 / 1000, 0,
-        -1, 1, -1, 1
-      ];
-      const viewMatrix = [
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, -400, 1
-      ];
-      gl.uniformMatrix4fv(projMatrixLocation, false, projMatrix);
-      gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix);
+      gl.uniform2f(resolutionLocation, 800, 600);
       return true;
     };
 
-    function drawCube(x, y, z, size, color, time) {
+    function drawRect(x, y, width, height, color, time) {
       if (!useWebGL || !gl) return;
-      const modelMatrix = [
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        x, y, z, 1
-      ];
-      gl.uniformMatrix4fv(modelMatrixLocation, false, modelMatrix);
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        x, y,
+        x + width, y,
+        x, y + height,
+        x + width, y,
+        x + width, y + height,
+        x, y + height
+      ]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(positionLocation);
+      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
       gl.uniform4f(colorLocation, color[0], color[1], color[2], 1);
       gl.uniform1f(timeLocation, time);
-
-      const vertices = new Float32Array([
-        // Front
-        -size, -size, size, size, -size, size, size, size, size,
-        -size, -size, size, size, size, size, -size, size, size,
-        // Back
-        -size, -size, -size, size, size, -size, size, -size, -size,
-        -size, -size, -size, -size, size, -size, size, size, -size,
-        // Top
-        -size, size, -size, size, size, size, size, size, -size,
-        -size, size, -size, -size, size, size, size, size, size,
-        // Bottom
-        -size, -size, -size, size, -size, -size, size, -size, size,
-        -size, -size, -size, size, -size, size, -size, -size, size,
-        // Right
-        size, -size, -size, size, size, size, size, -size, size,
-        size, -size, -size, size, size, -size, size, size, size,
-        // Left
-        -size, -size, -size, -size, -size, size, -size, size, size,
-        -size, -size, -size, -size, size, -size, -size, size, size
-      ]);
-      const normals = new Float32Array([
-        // Front
-        0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-        // Back
-        0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,
-        // Top
-        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
-        // Bottom
-        0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
-        // Right
-        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
-        // Left
-        -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0
-      ]);
-
-      const vertexBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(positionLocation);
-      gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
-
-      const normalBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(normalLocation);
-      gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
-
-      gl.drawArrays(gl.TRIANGLES, 0, 36);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
     // Game Logic
@@ -675,11 +573,11 @@
       constructor(multiplayer = false) {
         this.gridSize = 20;
         this.tileCount = 800 / this.gridSize;
-        this.snake = [{ x: 10, y: 10, z: 0 }];
-        this.food = { x: 15, y: 15, z: 0 };
+        this.snake = [{ x: 10, y: 10 }];
+        this.food = { x: 15, y: 15 };
         this.dx = 0;
         this.dy = 0;
-        this.score = user?.snakeHighScore || 0;
+        this.score = 0;
         this.particles = [];
         this.running = false;
         this.multiplayer = multiplayer;
@@ -688,7 +586,7 @@
       }
       start() {
         this.running = true;
-        document.getElementById('game-canvas').classList.add('active');
+        gameCanvas.classList.add('active');
         xmbContainer.classList.add('hidden');
         if (useWebGL) initWebGL();
         document.removeEventListener('keydown', this.handleInput);
@@ -697,19 +595,19 @@
       }
       stop() {
         this.running = false;
-        document.getElementById('game-canvas').classList.remove('active');
+        gameCanvas.classList.remove('active');
         xmbContainer.classList.remove('hidden');
         document.removeEventListener('keydown', this.handleInput);
+        if (this.score > snakeHighScore) {
+          snakeHighScore = this.score;
+          saveUserData();
+        }
         if (this.multiplayer && user) {
           try {
             localStorage.setItem('snakeMultiplayer', JSON.stringify(this.otherSnakes.slice(0, 5)));
           } catch (e) {
             console.warn('Failed to save multiplayer state:', e);
           }
-        }
-        if (user && this.score > user.snakeHighScore) {
-          user.snakeHighScore = this.score;
-          saveUserData();
         }
       }
       handleInput(e) {
@@ -724,7 +622,7 @@
         const delta = time - this.lastUpdate;
         if (delta < 1000 / gameSettings.snake.speed) return;
         this.lastUpdate = time;
-        const head = { x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy, z: 0 };
+        const head = { x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy };
         if (head.x < 0 || head.x >= this.tileCount || head.y < 0 || head.y >= this.tileCount || this.snake.some(s => s.x === head.x && s.y === head.y)) {
           this.stop();
           return;
@@ -732,32 +630,32 @@
         this.snake.unshift(head);
         if (head.x === this.food.x && head.y === this.food.y) {
           this.score += 10;
-          this.food = { x: Math.floor(Math.random() * this.tileCount), y: Math.floor(Math.random() * this.tileCount), z: 0 };
+          this.food = { x: Math.floor(Math.random() * this.tileCount), y: Math.floor(Math.random() * this.tileCount) };
           for (let i = 0; i < gameSettings.snake.particles; i++) {
-            this.particles.push({ x: head.x * this.gridSize, y: head.y * this.gridSize, z: 0, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, vz: (Math.random() - 0.5) * 3, life: 50 });
+            this.particles.push({ x: head.x * this.gridSize, y: head.y * this.gridSize, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, life: 50 });
           }
         } else {
           this.snake.pop();
         }
-        this.particles = this.particles.map(p => ({ ...p, x: p.x + p.vx, y: p.y + p.vy, z: p.z + p.vz, life: p.life - 1 })).filter(p => p.life > 0);
+        this.particles = this.particles.map(p => ({ ...p, x: p.x + p.vx, y: p.y + p.vy, life: p.life - 1 })).filter(p => p.life > 0);
         if (this.multiplayer) {
           this.otherSnakes = this.otherSnakes.map(s => ({
             ...s,
             x: Math.max(0, Math.min(this.tileCount - 1, s.x + (Math.random() > 0.5 ? 1 : -1) * (Math.random() > 0.5 ? 1 : 0))),
-            y: Math.max(0, Math.min(this.tileCount - 1, s.y + (Math.random() > 0.5 ? 1 : -1) * (Math.random() > 0.5 ? 1 : 0))),
-            z: 0
+            y: Math.max(0, Math.min(this.tileCount - 1, s.y + (Math.random() > 0.5 ? 1 : -1) * (Math.random() > 0.5 ? 1 : 0)))
           }));
         }
       }
       draw(time) {
         if (useWebGL && gl) {
-          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-          this.snake.forEach(s => drawCube(s.x * this.gridSize, s.y * this.gridSize, s.z, this.gridSize / 2, [0, 1, 0], time));
-          drawCube(this.food.x * this.gridSize, this.food.y * this.gridSize, this.food.z, this.gridSize / 2, [1, 0, 0], time);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          drawRect(0, 0, 800, 600, [0, 0, 0, 1], time);
+          this.snake.forEach(s => drawRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2, [0, 1, 0, 1], time));
+          drawRect(this.food.x * this.gridSize, this.food.y * this.gridSize, this.gridSize - 2, this.gridSize - 2, [1, 0, 0, 1], time);
           if (this.multiplayer) {
-            this.otherSnakes.forEach(s => drawCube(s.x * this.gridSize, s.y * this.gridSize, s.z, this.gridSize / 2, [0, 0, 1], time));
+            this.otherSnakes.forEach(s => drawRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2, [0, 0, 1, 1], time));
           }
-          this.particles.forEach(p => drawCube(p.x, p.y, p.z, 4, [1, 1, 1], time));
+          this.particles.forEach(p => drawRect(p.x, p.y, 4, 4, [1, 1, 1, 1], time));
         } else {
           ctx.fillStyle = '#000';
           ctx.fillRect(0, 0, 800, 600);
@@ -775,8 +673,7 @@
           this.particles.forEach(p => ctx.fillRect(p.x, p.y, 4, 4));
           ctx.fillStyle = '#fff';
           ctx.font = '20px Arial';
-          ctx.fillText(`Score: ${this.score}`, 10, 20);
-          ctx.fillText(`High Score: ${user?.snakeHighScore || 0}`, 10, 50);
+          ctx.fillText(`Score: ${this.score} | High: ${snakeHighScore}`, 10, 20);
         }
       }
       gameLoop(time) {
@@ -789,21 +686,21 @@
 
     class PlatformerGame {
       constructor(multiplayer = false) {
-        this.player = { x: 50, y: 500, z: 0, vx: 0, vy: 0, vz: 0, width: 20, height: 40, depth: 20 };
+        this.player = { x: 50, y: 500, vx: 0, vy: 0, width: 20, height: 40 };
         this.platforms = [
-          { x: 0, y: 550, z: 0, width: 800, height: 50, depth: 200 },
-          { x: 200, y: 400, z: 0, width: 100, height: 20, depth: 100 },
-          { x: 400, y: 300, z: 0, width: 100, height: 20, depth: 100 }
+          { x: 0, y: 550, width: 800, height: 50 },
+          { x: 200, y: 400, width: 100, height: 20 },
+          { x: 400, y: 300, width: 100, height: 20 }
         ];
-        this.score = user?.platformerHighScore || 0;
+        this.score = 0;
         this.running = false;
         this.multiplayer = multiplayer;
-        this.otherPlayer = multiplayer ? (JSON.parse(localStorage.getItem('platformerMultiplayer')) || { x: 100, y: 500, z: 0, vx: 0, vy: 0, vz: 0, width: 20, height: 40, depth: 20 }) : null;
+        this.otherPlayer = multiplayer ? (JSON.parse(localStorage.getItem('platformerMultiplayer')) || { x: 100, y: 500, vx: 0, vy: 0, width: 20, height: 40 }) : null;
         this.lastUpdate = 0;
       }
       start() {
         this.running = true;
-        document.getElementById('game-canvas').classList.add('active');
+        gameCanvas.classList.add('active');
         xmbContainer.classList.add('hidden');
         if (useWebGL) initWebGL();
         document.removeEventListener('keydown', this.handleInput);
@@ -814,20 +711,20 @@
       }
       stop() {
         this.running = false;
-        document.getElementById('game-canvas').classList.remove('active');
+        gameCanvas.classList.remove('active');
         xmbContainer.classList.remove('hidden');
         document.removeEventListener('keydown', this.handleInput);
         document.removeEventListener('keyup', this.handleKeyUp);
+        if (this.score > platformerHighScore) {
+          platformerHighScore = this.score;
+          saveUserData();
+        }
         if (this.multiplayer && user && this.otherPlayer) {
           try {
             localStorage.setItem('platformerMultiplayer', JSON.stringify(this.otherPlayer));
           } catch (e) {
             console.warn('Failed to save multiplayer state:', e);
           }
-        }
-        if (user && this.score > user.platformerHighScore) {
-          user.platformerHighScore = this.score;
-          saveUserData();
         }
       }
       handleInput(e) {
@@ -840,13 +737,11 @@
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') this.player.vx = 0;
       }
       isOnGround(player = this.player) {
-        return this.platforms.some(p =>
+        return this.platforms.some(p => 
           player.y + player.height >= p.y &&
           player.y + player.height <= p.y + p.height &&
           player.x + player.width > p.x &&
-          player.x < p.x + p.width &&
-          player.z + player.depth > p.z &&
-          player.z < p.z + p.depth
+          player.x < p.x + p.width
         );
       }
       update(time) {
@@ -864,8 +759,7 @@
         }
         this.platforms.forEach(p => {
           if (this.player.vy > 0 && this.player.y + this.player.height <= p.y && this.player.y + this.player.height + this.player.vy > p.y &&
-              this.player.x + this.player.width > p.x && this.player.x < p.x + p.width &&
-              this.player.z + this.player.depth > p.z && this.player.z < p.z + p.depth) {
+              this.player.x + this.player.width > p.x && this.player.x < p.x + p.width) {
             this.player.y = p.y - this.player.height;
             this.player.vy = 0;
           }
@@ -880,10 +774,9 @@
             this.otherPlayer.vy = 0;
           }
           this.platforms.forEach(p => {
-            if (this.otherPlayer.vy > 0 && this.otherPlayer.y + this.otherPlayer.height <= p.y &&
+            if (this.otherPlayer.vy > 0 && this.otherPlayer.y + this.otherPlayer.height <= p.y && 
                 this.otherPlayer.y + this.otherPlayer.height + this.otherPlayer.vy > p.y &&
-                this.otherPlayer.x + this.otherPlayer.width > p.x && this.otherPlayer.x < p.x + p.width &&
-                this.otherPlayer.z + this.otherPlayer.depth > p.z && this.otherPlayer.z < p.z + p.depth) {
+                this.otherPlayer.x + this.otherPlayer.width > p.x && this.otherPlayer.x < p.x + p.width) {
               this.otherPlayer.y = p.y - this.otherPlayer.height;
               this.otherPlayer.vy = 0;
             }
@@ -894,12 +787,13 @@
       }
       draw(time) {
         if (useWebGL && gl) {
-          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-          drawCube(this.player.x, this.player.y, this.player.z, this.player.width / 2, [0, 0, 1], time);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          drawRect(0, 0, 800, 600, [0, 0, 0, 1], time);
+          drawRect(this.player.x, this.player.y, this.player.width, this.player.height, [0, 0, 1, 1], time);
           if (this.multiplayer && this.otherPlayer) {
-            drawCube(this.otherPlayer.x, this.otherPlayer.y, this.otherPlayer.z, this.otherPlayer.width / 2, [1, 0, 0], time);
+            drawRect(this.otherPlayer.x, this.otherPlayer.y, this.otherPlayer.width, this.otherPlayer.height, [1, 0, 0, 1], time);
           }
-          this.platforms.forEach(p => drawCube(p.x, p.y, p.z, p.width / 2, [0.333, 0.333, 0.333], time));
+          this.platforms.forEach(p => drawRect(p.x, p.y, p.width, p.height, [0.333, 0.333, 0.333, 1], time));
         } else {
           ctx.fillStyle = '#000';
           ctx.fillRect(0, 0, 800, 600);
@@ -917,8 +811,7 @@
           this.platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
           ctx.fillStyle = '#fff';
           ctx.font = '20px Arial';
-          ctx.fillText(`Score: ${this.score}`, 10, 20);
-          ctx.fillText(`High Score: ${user?.platformerHighScore || 0}`, 10, 50);
+          ctx.fillText(`Score: ${this.score} | High: ${platformerHighScore}`, 10, 20);
         }
       }
       gameLoop(time) {
@@ -942,8 +835,15 @@
       });
     });
 
+    document.querySelector('.submenu-item[data-action="login"]').addEventListener('click', () => {
+      loginScreen.classList.add('active');
+      xmbContainer.classList.add('hidden');
+      if (currentGame) currentGame.stop();
+    });
+
     // Initialize
-    verifySession();
+    document.getElementById('users-submenu').classList.add('active', 'block');
+    loadUserData();
   </script>
 </body>
 </html>
