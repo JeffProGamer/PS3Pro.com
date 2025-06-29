@@ -1,24 +1,34 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const fs = require('fs-extra');
-const path = require('path');
-
+const mongoose = require('mongoose');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 const secretKey = 'ps3-pro-site-secret';
 
-const usersFile = path.join(__dirname, 'data', 'users.json');
-const savedDataFile = path.join(__dirname, 'data', 'savedData.json');
+// ===== Connect to MongoDB =====
+mongoose.connect(process.env.MONGO_URI || 'your-mongo-connection-string-here', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+mongoose.connection.once('open', () => console.log('✅ Connected to MongoDB'));
 
-app.use(cors({ origin: 'http://localhost' }));
+// ===== MongoDB Models =====
+const UserSchema = new mongoose.Schema({
+  username: String,
+  password: String,
+  provider: String,
+});
+const SaveSchema = new mongoose.Schema({
+  username: String,
+  data: Object,
+});
+const User = mongoose.model('User', UserSchema);
+const Save = mongoose.model('Save', SaveSchema);
+
+// ===== Middleware =====
+app.use(cors());
 app.use(express.json());
-
-const loadUsers = () => fs.readJson(usersFile).catch(() => []);
-const saveUsers = (users) => fs.writeJson(usersFile, users, { spaces: 2 });
-
-const loadSavedData = () => fs.readJson(savedDataFile).catch(() => ({}));
-const saveSavedData = (data) => fs.writeJson(savedDataFile, data, { spaces: 2 });
 
 const validateCredentials = (username, provider) => {
   if (!username || !provider) return false;
@@ -30,23 +40,25 @@ const validateCredentials = (username, provider) => {
   }
 };
 
+// ===== Routes =====
+app.get('/ping', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.post('/signin', async (req, res) => {
   const { username, password, provider } = req.body;
   if (!username || !password || !provider) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    return res.status(400).json({ error: 'Missing fields' });
   }
   if (!validateCredentials(username, provider)) {
     return res.status(400).json({ error: 'Invalid email or PSN ID' });
   }
 
-  let users = await loadUsers();
-  let user = users.find(u => u.username === username && u.password === password && u.provider === provider);
-
+  let user = await User.findOne({ username, provider });
   if (!user) {
-    // Register new user
-    user = { username, password, provider };
-    users.push(user);
-    await saveUsers(users);
+    user = await User.create({ username, password, provider });
+  } else if (user.password !== password) {
+    return res.status(401).json({ error: 'Invalid credentials' });
   }
 
   const token = jwt.sign({ username, provider }, secretKey, { expiresIn: '1h' });
@@ -55,7 +67,7 @@ app.post('/signin', async (req, res) => {
 
 app.post('/verify', (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  if (!token) return res.status(401).json({ error: 'No token' });
   try {
     jwt.verify(token, secretKey);
     res.status(200).json({ valid: true });
@@ -66,11 +78,10 @@ app.post('/verify', (req, res) => {
 
 app.get('/user', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  if (!token) return res.status(401).json({ error: 'No token' });
   try {
     const decoded = jwt.verify(token, secretKey);
-    const users = await loadUsers();
-    const user = users.find(u => u.username === decoded.username && u.provider === decoded.provider);
+    const user = await User.findOne({ username: decoded.username, provider: decoded.provider });
     if (user) {
       res.json({ username: user.username, provider: user.provider });
     } else {
@@ -83,13 +94,21 @@ app.get('/user', async (req, res) => {
 
 app.post('/save', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  if (!token) return res.status(401).json({ error: 'No token' });
   try {
     const decoded = jwt.verify(token, secretKey);
-    const { theme, animations, fastMode, snakeHighScore, platformerHighScore } = req.body;
-    const savedData = await loadSavedData();
-    savedData[decoded.username] = { theme, animations, fastMode, snakeHighScore, platformerHighScore };
-    await saveSavedData(savedData);
+    const saveData = {
+      theme: req.body.theme,
+      animations: req.body.animations,
+      fastMode: req.body.fastMode,
+      snakeHighScore: req.body.snakeHighScore,
+      platformerHighScore: req.body.platformerHighScore,
+    };
+    await Save.findOneAndUpdate(
+      { username: decoded.username },
+      { data: saveData },
+      { upsert: true }
+    );
     res.status(200).json({ status: 'saved' });
   } catch (e) {
     res.status(401).json({ error: 'Invalid token' });
@@ -98,17 +117,17 @@ app.post('/save', async (req, res) => {
 
 app.get('/load', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  if (!token) return res.status(401).json({ error: 'No token' });
   try {
     const decoded = jwt.verify(token, secretKey);
-    const savedData = await loadSavedData();
-    const data = savedData[decoded.username] || {};
-    res.json(data);
+    const save = await Save.findOne({ username: decoded.username });
+    res.json(save?.data || {});
   } catch (e) {
     res.status(401).json({ error: 'Invalid token' });
   }
 });
 
+// ===== Start Server =====
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  console.log(`🟢 Server running at http://localhost:${port}`);
 });
