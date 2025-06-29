@@ -5,7 +5,7 @@ const app = express();
 const port = 3000;
 const secretKey = 'ps3-pro-site-secret'; // Replace with secure key in production
 
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: 'http://localhost' }));
 app.use(express.json());
 
 // Mock user database
@@ -99,6 +99,11 @@ app.get('/load', (req, res) => {
   } catch (e) {
     res.status(401).json({ error: 'Invalid token' });
   }
+});
+
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(port, () => {
