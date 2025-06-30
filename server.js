@@ -1,4 +1,3 @@
-```javascript
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -271,4 +270,3 @@ app.listen(port, host, () => {
   console.error(`❌ Server startup error: ${err.message}`);
   process.exit(1);
 });
-```
