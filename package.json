@@ -1,17 +1,17 @@
 {
   "name": "ps3-pro-site",
-  "version": "1.0.1",
-  "description": "Backend for PS3 Pro Site with user authentication and game data storage",
+  "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^9.0.0",
     "cors": "^2.8.5",
-    "mongoose": "^7.6.0",
-    "bcrypt": "^5.1.0",
-    "express-rate-limit": "^6.7.0"
+    "mongoose": "^6.0.0",
+    "bcrypt": "^5.0.1",
+    "express-rate-limit": "^6.0.0",
+    "morgan": "^1.10.0"
   }
 }
