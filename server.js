@@ -4,6 +4,8 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
+const morgan = require('morgan'); // For request logging
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -44,6 +46,8 @@ const Save = mongoose.model('Save', SaveSchema);
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(morgan('dev')); // Log HTTP requests
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files from 'public' directory
 
 // Rate limiting for sign-in endpoint
 const signInLimiter = rateLimit({
@@ -53,6 +57,7 @@ const signInLimiter = rateLimit({
 });
 app.use('/signin', signInLimiter);
 
+// Input validation
 const validateCredentials = (username, password, provider) => {
   if (!username || !password || !provider) return false;
   if (password.length < 6) return false;
@@ -72,7 +77,7 @@ app.get('/ping', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.post('/signin', async (req, res) => {
+app.post('/signin', async (req, res, next) => {
   const { username, password, provider } = req.body;
   if (!validateCredentials(username, password, provider)) {
     return res.status(400).json({ error: 'Invalid username, password, or provider' });
@@ -83,6 +88,7 @@ app.post('/signin', async (req, res) => {
     if (!user) {
       const hashedPassword = await bcrypt.hash(password, 10);
       user = await User.create({ username, password: hashedPassword, provider });
+      console.log(`Created new user: ${username} (${provider})`);
     } else {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
@@ -93,12 +99,11 @@ app.post('/signin', async (req, res) => {
     const token = jwt.sign({ username, provider }, secretKey, { expiresIn: '1h' });
     res.json({ token });
   } catch (e) {
-    console.error('Sign-in error:', e);
-    res.status(500).json({ error: 'Server error during sign-in' });
+    next(e); // Pass to error middleware
   }
 });
 
-app.post('/verify', (req, res) => {
+app.post('/verify', (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token provided' });
 
@@ -106,12 +111,11 @@ app.post('/verify', (req, res) => {
     jwt.verify(token, secretKey);
     res.status(200).json({ valid: true });
   } catch (e) {
-    console.error('Token verification error:', e);
-    res.status(401).json({ error: 'Invalid or expired token' });
+    next(e);
   }
 });
 
-app.get('/user', async (req, res) => {
+app.get('/user', async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token provided' });
 
@@ -124,23 +128,22 @@ app.get('/user', async (req, res) => {
       res.status(404).json({ error: 'User not found' });
     }
   } catch (e) {
-    console.error('User fetch error:', e);
-    res.status(401).json({ error: 'Invalid or expired token' });
+    next(e);
   }
 });
 
-app.post('/save', async (req, res) => {
+app.post('/save', async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token provided' });
 
   try {
     const decoded = jwt.verify(token, secretKey);
     const saveData = {
-      theme: req.body.theme,
-      animations: req.body.animations,
-      fastMode: req.body.fastMode,
-      snakeHighScore: req.body.snakeHighScore,
-      platformerHighScore: req.body.platformerHighScore
+      theme: req.body.theme || 'default',
+      animations: req.body.animations !== undefined ? req.body.animations : true,
+      fastMode: req.body.fastMode || false,
+      snakeHighScore: Number(req.body.snakeHighScore) || 0,
+      platformerHighScore: Number(req.body.platformerHighScore) || 0
     };
 
     await Save.findOneAndUpdate(
@@ -151,12 +154,11 @@ app.post('/save', async (req, res) => {
 
     res.status(200).json({ status: 'saved' });
   } catch (e) {
-    console.error('Save data error:', e);
-    res.status(401).json({ error: 'Invalid or expired token' });
+    next(e);
   }
 });
 
-app.get('/load', async (req, res) => {
+app.get('/load', async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token provided' });
 
@@ -165,9 +167,19 @@ app.get('/load', async (req, res) => {
     const save = await Save.findOne({ username: decoded.username });
     res.json(save?.data || {});
   } catch (e) {
-    console.error('Load data error:', e);
-    res.status(401).json({ error: 'Invalid or expired token' });
+    next(e);
   }
+});
+
+// Serve index.html for root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(`❌ Server error: ${err.message}`, err.stack);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // Start server
