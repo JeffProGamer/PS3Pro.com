@@ -13,11 +13,17 @@ const port = process.env.PORT || 3000;
 const secretKey = process.env.JWT_SECRET || 'ps3-pro-site-secret';
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ps3prosite';
 const publicPath = path.join(__dirname, 'public');
+const indexPath = path.join(publicPath, 'index.html');
 
-// Check if public directory exists
+// Check if public directory and index.html exist
 if (!fs.existsSync(publicPath)) {
   console.error(`❌ Public directory not found at: ${publicPath}`);
   console.error('Please create a "public" directory and place index.html in it.');
+  process.exit(1);
+}
+if (!fs.existsSync(indexPath)) {
+  console.error(`❌ index.html not found at: ${indexPath}`);
+  console.error('Please ensure index.html exists in the public directory.');
   process.exit(1);
 }
 
@@ -57,7 +63,12 @@ const Save = mongoose.model('Save', SaveSchema);
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev')); // Log HTTP requests
-app.use(express.static(publicPath)); // Serve static files from 'public'
+app.use(express.static(publicPath, {
+  index: false, // Disable automatic index.html serving to control via route
+  setHeaders: (res, path) => {
+    console.log(`Serving static file: ${path}`);
+  }
+})); // Serve static files from 'public'
 
 // Rate limiting for sign-in endpoint
 const signInLimiter = rateLimit({
@@ -90,6 +101,7 @@ const validateCredentials = (username, password, provider) => {
 
 // Routes
 app.get('/ping', (req, res) => {
+  console.log('Received /ping request');
   res.status(200).json({ status: 'ok' });
 });
 
@@ -202,24 +214,26 @@ app.get('/load', async (req, res, next) => {
   }
 });
 
-// Serve index.html for root and catch-all routes
+// Serve index.html for root route
 app.get('/', (req, res) => {
-  const indexPath = path.join(publicPath, 'index.html');
-  if (!fs.existsSync(indexPath)) {
-    console.error(`❌ index.html not found at: ${indexPath}`);
-    return res.status(404).json({ error: 'index.html not found. Please ensure it exists in the public directory.' });
-  }
-  res.sendFile(indexPath);
+  console.log(`Serving index.html from: ${indexPath}`);
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error(`❌ Failed to serve index.html: ${err.message}`);
+      res.status(404).json({ error: 'index.html not found. Please ensure it exists in the public directory.' });
+    }
+  });
 });
 
-// Catch-all for single-page application routing
+// Catch-all route for single-page application
 app.get('*', (req, res) => {
-  const indexPath = path.join(publicPath, 'index.html');
-  if (!fs.existsSync(indexPath)) {
-    console.error(`❌ index.html not found at: ${indexPath}`);
-    return res.status(404).json({ error: 'index.html not found. Please ensure it exists in the public directory.' });
-  }
-  res.sendFile(indexPath);
+  console.log(`Serving index.html for catch-all route: ${req.path}`);
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error(`❌ Failed to serve index.html: ${err.message}`);
+      res.status(404).json({ error: 'index.html not found. Please ensure it exists in the public directory.' });
+    }
+  });
 });
 
 // Error handling middleware
