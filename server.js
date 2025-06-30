@@ -5,24 +5,34 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-const morgan = require('morgan'); // For request logging
+const morgan = require('morgan');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 3000;
 const secretKey = process.env.JWT_SECRET || 'ps3-pro-site-secret';
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ps3prosite';
+const publicPath = path.join(__dirname, 'public');
+
+// Check if public directory exists
+if (!fs.existsSync(publicPath)) {
+  console.error(`❌ Public directory not found at: ${publicPath}`);
+  console.error('Please create a "public" directory and place index.html in it.');
+  process.exit(1);
+}
 
 // MongoDB connection with retry logic
 const connectWithRetry = (retries = 5, delay = 5000) => {
+  console.log(`Attempting MongoDB connection (attempt ${6 - retries})...`);
   mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('✅ Connected to MongoDB'))
     .catch(err => {
-      console.error(`❌ MongoDB connection error (attempt ${6 - retries}):`, err);
+      console.error(`❌ MongoDB connection error: ${err.message}`);
       if (retries > 1) {
+        console.log(`Retrying in ${delay / 1000} seconds...`);
         setTimeout(() => connectWithRetry(retries - 1, delay), delay);
       } else {
-        console.error('❌ Failed to connect to MongoDB after retries');
-        process.exit(1);
+        console.error('❌ Failed to connect to MongoDB after retries. Server will continue without MongoDB.');
       }
     });
 };
@@ -47,7 +57,7 @@ const Save = mongoose.model('Save', SaveSchema);
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev')); // Log HTTP requests
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files from 'public' directory
+app.use(express.static(publicPath)); // Serve static files from 'public'
 
 // Rate limiting for sign-in endpoint
 const signInLimiter = rateLimit({
@@ -59,8 +69,14 @@ app.use('/signin', signInLimiter);
 
 // Input validation
 const validateCredentials = (username, password, provider) => {
-  if (!username || !password || !provider) return false;
-  if (password.length < 6) return false;
+  if (!username || !password || !provider) {
+    console.warn('Invalid credentials: missing username, password, or provider');
+    return false;
+  }
+  if (password.length < 6) {
+    console.warn('Invalid credentials: password too short');
+    return false;
+  }
   if (provider === 'psn') {
     return /^[a-zA-Z0-9_-]{3,16}$/.test(username);
   } else {
@@ -92,6 +108,7 @@ app.post('/signin', async (req, res, next) => {
     } else {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
+        console.warn(`Failed login attempt for ${username} (${provider}): invalid password`);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
     }
@@ -99,25 +116,32 @@ app.post('/signin', async (req, res, next) => {
     const token = jwt.sign({ username, provider }, secretKey, { expiresIn: '1h' });
     res.json({ token });
   } catch (e) {
-    next(e); // Pass to error middleware
+    next(e);
   }
 });
 
 app.post('/verify', (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  if (!token) {
+    console.warn('Verify request failed: No token provided');
+    return res.status(401).json({ error: 'No token provided' });
+  }
 
   try {
     jwt.verify(token, secretKey);
     res.status(200).json({ valid: true });
   } catch (e) {
+    console.warn(`Token verification failed: ${e.message}`);
     next(e);
   }
 });
 
 app.get('/user', async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  if (!token) {
+    console.warn('User request failed: No token provided');
+    return res.status(401).json({ error: 'No token provided' });
+  }
 
   try {
     const decoded = jwt.verify(token, secretKey);
@@ -125,6 +149,7 @@ app.get('/user', async (req, res, next) => {
     if (user) {
       res.json({ username: user.username, provider: user.provider });
     } else {
+      console.warn(`User not found: ${decoded.username} (${decoded.provider})`);
       res.status(404).json({ error: 'User not found' });
     }
   } catch (e) {
@@ -134,7 +159,10 @@ app.get('/user', async (req, res, next) => {
 
 app.post('/save', async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  if (!token) {
+    console.warn('Save request failed: No token provided');
+    return res.status(401).json({ error: 'No token provided' });
+  }
 
   try {
     const decoded = jwt.verify(token, secretKey);
@@ -151,7 +179,7 @@ app.post('/save', async (req, res, next) => {
       { data: saveData },
       { upsert: true }
     );
-
+    console.log(`Saved data for ${decoded.username}`);
     res.status(200).json({ status: 'saved' });
   } catch (e) {
     next(e);
@@ -160,7 +188,10 @@ app.post('/save', async (req, res, next) => {
 
 app.get('/load', async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  if (!token) {
+    console.warn('Load request failed: No token provided');
+    return res.status(401).json({ error: 'No token provided' });
+  }
 
   try {
     const decoded = jwt.verify(token, secretKey);
@@ -171,9 +202,24 @@ app.get('/load', async (req, res, next) => {
   }
 });
 
-// Serve index.html for root route
+// Serve index.html for root and catch-all routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const indexPath = path.join(publicPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    console.error(`❌ index.html not found at: ${indexPath}`);
+    return res.status(404).json({ error: 'index.html not found. Please ensure it exists in the public directory.' });
+  }
+  res.sendFile(indexPath);
+});
+
+// Catch-all for single-page application routing
+app.get('*', (req, res) => {
+  const indexPath = path.join(publicPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    console.error(`❌ index.html not found at: ${indexPath}`);
+    return res.status(404).json({ error: 'index.html not found. Please ensure it exists in the public directory.' });
+  }
+  res.sendFile(indexPath);
 });
 
 // Error handling middleware
@@ -185,4 +231,11 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(port, () => {
   console.log(`🟢 Server running at http://localhost:${port}`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${port} is in use. Please free the port or use a different one.`);
+  } else {
+    console.error(`❌ Server startup error: ${err.message}`);
+  }
+  process.exit(1);
 });
