@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PS3 Pro Site</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -27,11 +28,12 @@
     }
     #boot-screen img {
       width: 200px;
-      animation: pulse 1s infinite;
+      animation: pulse 1.5s infinite ease-in-out; /* Slower pulse */
+      will-change: transform, opacity;
     }
     @keyframes pulse {
       0%, 100% { transform: scale(1); opacity: 0.7; }
-      50% { transform: scale(1.2); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 1; } /* Reduced scale */
     }
     @keyframes fadeOut {
       to { opacity: 0; visibility: hidden; }
@@ -44,8 +46,9 @@
       height: 100vh;
       z-index: -1;
       background: linear-gradient(135deg, #1a1a1a, #4a4a4a, #1a1a1a);
-      animation: waveAnimation 10s infinite linear;
-      filter: brightness(1.3);
+      animation: waveAnimation 15s infinite linear; /* Slower wave */
+      filter: brightness(1.2); /* Lowered brightness */
+      will-change: background-position;
     }
     #background.theme-blue {
       background: linear-gradient(135deg, #1a1a3a, #4a4a8a, #1a1a3a);
@@ -58,7 +61,8 @@
       100% { background-position: 200% 50%; }
     }
     .xmb-item {
-      transition: all 0.3s ease;
+      transition: all 0.4s ease; /* Smoother transition */
+      will-change: transform, opacity;
     }
     .xmb-item img {
       width: 64px;
@@ -66,32 +70,33 @@
       filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
     }
     .xmb-item:hover {
-      transform: scale(1.2);
-      filter: brightness(1.3);
+      transform: scale(1.1); /* Reduced scale */
+      filter: brightness(1.2);
     }
     .xmb-item.active {
-      transform: scale(1.25);
+      transform: scale(1.2);
       opacity: 1;
     }
     .xmb-item:not(.active) {
-      opacity: 0.5;
+      opacity: 0.6; /* Slightly higher for visibility */
     }
     .xmb-item.active img {
-      animation: frameAnimation 0.8s steps(4) infinite;
+      animation: none; /* Removed frameAnimation to reduce flicker */
     }
     .submenu {
       display: none;
       background: rgba(0, 0, 0, 0.9);
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); /* Reduced shadow */
+      will-change: opacity, transform;
     }
     .submenu.active {
-      animation: slideIn 0.4s ease;
+      animation: slideIn 0.5s ease;
       display: block;
     }
     .submenu-item {
-      transition: all 0.3s ease;
+      transition: all 0.4s ease;
       padding: 10px;
       margin: 5px;
     }
@@ -124,7 +129,7 @@
       background: rgba(0, 0, 0, 0.9);
       padding: 40px;
       border-radius: 15px;
-      box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
       width: 400px;
       text-align: center;
     }
@@ -136,7 +141,7 @@
       border-radius: 5px;
       background: #222;
       color: #fff;
-      transition: all 0.3s ease;
+      transition: all 0.4s ease;
     }
     #login-form input:focus, #login-form select:focus {
       border-color: #fff;
@@ -148,7 +153,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.4s ease;
     }
     #login-form button:hover {
       transform: scale(1.1);
@@ -165,13 +170,26 @@
       color: #f00;
       animation: fadeIn 0.5s ease;
     }
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 30;
+      color: #fff;
+      font-size: 24px;
+    }
+    #loading-screen.active {
+      display: flex;
+    }
     @keyframes slideIn {
       from { transform: translateX(-50%) translateY(-30px); opacity: 0; }
       to { transform: translateX(-50%) translateY(0); opacity: 1; }
-    }
-    @keyframes frameAnimation {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-256px); }
     }
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -179,309 +197,21 @@
     }
     .no-animations .xmb-item, .no-animations .submenu, .no-animations .submenu-item,
     .no-animations #login-form input, .no-animations #login-form select,
-    .no-animations #login-form button {
+    .no-animations #login-form button, .no-animations #background {
       transition: none !important;
-      animation: none !important;
-    }
-    .no-animations #background {
       animation: none !important;
     }
   </style>
 </head>
 <body>
+  <div id="loading-screen" role="alert" aria-label="Loading">Loading...</div>
   <div id="boot-screen" role="alert" aria-label="Loading screen">
     <img src="https://via.placeholder.com/200?text=PS3+Pro+Site+Logo" alt="PS3 Pro Site Logo">
   </div>
   <div id="background"></div>
-  <div class="flex justify-center items-center h-screen relative" id="xmb-container" role="navigation" aria-label="Main menu">
-    <h1 class="absolute top-4 left-4 text-2xl font-bold text-white/90">PS3 Pro Site</h1>
-    <h2 id="user-welcome" class="absolute top-4 right-4 text-lg text-white/80" aria-live="polite"></h2>
-    <div class="flex justify-around w-full absolute top-[20%] xmb-menu" role="menubar">
-      <div class="text-center cursor-pointer xmb-item active" data-menu="users" role="menuitem" aria-haspopup="true" tabindex="0">
-        <img src="https://via.placeholder.com/64?text=Users" alt="Users">
-        <p>Users</p>
-      </div>
-      <div class="text-center cursor-pointer xmb-item" data-menu="settings" role="menuitem" aria-haspopup="true" tabindex="-1">
-        <img src="https://via.placeholder.com/64?text=Settings" alt="Settings">
-        <p>Settings</p>
-      </div>
-      <div class="text-center cursor-pointer xmb-item" data-menu="games" role="menuitem" aria-haspopup="true" tabindex="-1">
-        <img src="https://via.placeholder.com/64?text=Games" alt="Games">
-        <p>Games</p>
-      </div>
-      <div class="text-center cursor-pointer xmb-item" data-menu="media" role="menuitem" aria-haspopup="true" tabindex="-1">
-        <img src="https://via.placeholder.com/64?text=Media" alt="Media">
-        <p>Media</p>
-      </div>
-      <div class="text-center cursor-pointer xmb-item" data-menu="network" role="menuitem" aria-haspopup="true" tabindex="-1">
-        <img src="https://via.placeholder.com/64?text=Network" alt="Network">
-        <p>Network</p>
-      </div>
-    </div>
-    <div class="absolute top-[30%] left-1/2 -translate-x-1/2 submenu active block" id="users-submenu" role="menu" aria-label="Users submenu">
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-action="login" role="ម
-
-System: I've reviewed the provided `index.html` and `server.js` files, along with the `package.json`, `saveData.json`, and `users.json`. Below, I'll outline the fixes and improvements made to each file to address issues such as invalid Tailwind CSS classes, undefined `hidden` class, game loop optimization, WebGL fallback, input sanitization, accessibility, error handling, password hashing, MongoDB connection retries, and rate limiting. The `saveData.json` and `users.json` files are empty and unnecessary since the application uses MongoDB for data storage, so they will be ignored.
-
-### Fixes and Improvements
-
-#### **index.html**
-1. **Tailwind CSS Classes**:
-   - Replaced invalid Tailwind classes (`hover:bg-white/20`, `scale-125`, `opacity-100`, `opacity-50`) with equivalent CSS styles in the `<style>` section.
-   - For example, `hover:bg-white/20` is replaced with `hover: background: rgba(255, 255, 255, 0.2);`, and `scale-125` is replaced with `transform: scale(1.25);`.
-
-2. **Hidden Class**:
-   - Added a `.hidden { display: none; }` CSS rule to properly handle elements with the `hidden` class.
-
-3. **Game Loop Optimization**:
-   - Modified the `SnakeGame` and `PlatformerGame` classes to use a more robust frame rate control mechanism by calculating the delta time and ensuring updates occur at the desired FPS (frames per second).
-
-4. **WebGL Fallback**:
-   - Enhanced the `initWebGL` function to handle WebGL initialization failures more gracefully, ensuring fallback to 2D canvas rendering without errors.
-
-5. **Input Sanitization**:
-   - Added a `sanitizeInput` function to escape HTML characters in the username input to prevent XSS attacks.
-
-6. **Accessibility**:
-   - Added ARIA attributes (`role`, `aria-label`, `aria-haspopup`, `aria-live`, `tabindex`) to improve accessibility for screen readers and keyboard navigation.
-   - Ensured the `xmb-item` elements are focusable and navigable via keyboard.
-
-7. **Error Handling**:
-   - Improved error messages in the `signIn` function to provide clearer feedback to users.
-   - Added try-catch blocks around critical operations to prevent crashes.
-
-#### **server.js**
-1. **Environment Variables**:
-   - Ensured the MongoDB URI is loaded from `process.env.MONGO_URI` and added a fallback for local development.
-
-2. **Password Hashing**:
-   - Integrated `bcrypt` to hash passwords before storing them in the `User` collection.
-   - Updated the `/signin` endpoint to compare hashed passwords securely.
-
-3. **Input Validation**:
-   - Strengthened the `validateCredentials` function to include password length checks and stricter email validation.
-
-4. **MongoDB Connection**:
-   - Added retry logic to the MongoDB connection with a configurable number of retries and delay.
-
-5. **Rate Limiting**:
-   - Added `express-rate-limit` to limit requests to the `/signin` endpoint to 10 per minute per IP to prevent brute-force attacks.
-
-6. **Error Handling**:
-   - Improved error responses with specific status codes and messages.
-   - Added logging for MongoDB connection errors and API failures.
-
-#### **package.json**
-- Added `bcrypt` and `express-rate-limit` as dependencies.
-- Ensured the `start` script is correctly defined.
-- Updated the version and description for clarity.
-
-#### **saveData.json and users.json**
-- These files are empty and unnecessary since the application uses MongoDB (`User` and `Save` collections). No changes are needed, and they can be ignored or removed from the project.
-
-### Updated Files
-
-Below are the updated `index.html`, `server.js`, and `package.json` files with the described fixes and improvements.
-
-<xaiArtifact artifact_id="c90ca8be-8954-47e5-8056-d4d586657559" artifact_version_id="9f6b9dec-158b-43d0-8411-04d04bcb3018" title="index.html" contentType="text/html">
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PS3 Pro Site</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: #000;
-      font-family: Arial, sans-serif;
-      color: #fff;
-    }
-    #boot-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 20;
-      animation: fadeOut 3s forwards 2s;
-    }
-    #boot-screen img {
-      width: 200px;
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 0.7; }
-      50% { transform: scale(1.2); opacity: 1; }
-    }
-    @keyframes fadeOut {
-      to { opacity: 0; visibility: hidden; }
-    }
-    #background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: -1;
-      background: linear-gradient(135deg, #1a1a1a, #4a4a4a, #1a1a1a);
-      animation: waveAnimation 10s infinite linear;
-      filter: brightness(1.3);
-    }
-    #background.theme-blue {
-      background: linear-gradient(135deg, #1a1a3a, #4a4a8a, #1a1a3a);
-    }
-    #background.theme-red {
-      background: linear-gradient(135deg, #3a1a1a, #8a4a4a, #3a1a1a);
-    }
-    @keyframes waveAnimation {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 200% 50%; }
-    }
-    .xmb-item {
-      transition: all 0.3s ease;
-    }
-    .xmb-item img {
-      width: 64px;
-      height: 64px;
-      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
-    }
-    .xmb-item:hover {
-      transform: scale(1.2);
-      filter: brightness(1.3);
-    }
-    .xmb-item.active {
-      transform: scale(1.25);
-      opacity: 1;
-    }
-    .xmb-item:not(.active) {
-      opacity: 0.5;
-    }
-    .xmb-item.active img {
-      animation: frameAnimation 0.8s steps(4) infinite;
-    }
-    .submenu {
-      display: none;
-      background: rgba(0, 0, 0, 0.9);
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
-    }
-    .submenu.active {
-      animation: slideIn 0.4s ease;
-      display: block;
-    }
-    .submenu-item {
-      transition: all 0.3s ease;
-      padding: 10px;
-      margin: 5px;
-    }
-    .submenu-item:hover {
-      transform: translateX(8px);
-      background: rgba(255, 255, 255, 0.2);
-    }
-    #game-canvas, #login-screen {
-      display: none;
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-      z-index: 10;
-    }
-    #game-canvas.active, #login-screen.active {
-      display: block;
-    }
-    .hidden {
-      display: none;
-    }
-    #login-screen {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    #login-form {
-      background: rgba(0, 0, 0, 0.9);
-      padding: 40px;
-      border-radius: 15px;
-      box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
-      width: 400px;
-      text-align: center;
-    }
-    #login-form input, #login-form select {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #555;
-      border-radius: 5px;
-      background: #222;
-      color: #fff;
-      transition: all 0.3s ease;
-    }
-    #login-form input:focus, #login-form select:focus {
-      border-color: #fff;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-    }
-    #login-form button {
-      padding: 10px 20px;
-      margin: 5px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    #login-form button:hover {
-      transform: scale(1.1);
-      filter: brightness(1.2);
-    }
-    #login-form button.sign-in {
-      background: #0066cc;
-    }
-    #login-form button.cancel {
-      background: #666;
-    }
-    #login-message {
-      margin-top: 10px;
-      color: #f00;
-      animation: fadeIn 0.5s ease;
-    }
-    @keyframes slideIn {
-      from { transform: translateX(-50%) translateY(-30px); opacity: 0; }
-      to { transform: translateX(-50%) translateY(0); opacity: 1; }
-    }
-    @keyframes frameAnimation {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-256px); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    .no-animations .xmb-item, .no-animations .submenu, .no-animations .submenu-item,
-    .no-animations #login-form input, .no-animations #login-form select,
-    .no-animations #login-form button {
-      transition: none !important;
-      animation: none !important;
-    }
-    .no-animations #background {
-      animation: none !important;
-    }
-  </style>
-</head>
-<body>
-  <div id="boot-screen" role="alert" aria-label="Loading screen">
-    <img src="https://via.placeholder.com/200?text=PS3+Pro+Site+Logo" alt="PS3 Pro Site Logo">
-  </div>
-  <div id="background"></div>
-  <div class="flex justify-center items-center h-screen relative" id="xmb-container" role="navigation" aria-label="Main menu">
-    <h1 class="absolute top-4 left-4 text-2xl font-bold text-white/90">PS3 Pro Site</h1>
-    <h2 id="user-welcome" class="absolute top-4 right-4 text-lg text-white/80" aria-live="polite"></h2>
+  <div class="relative h-screen" id="xmb-container" role="navigation" aria-label="Main menu">
+    <h1 class="absolute top-4 left-4 text-2xl font-bold text-white">PS3 Pro Site</h1>
+    <h2 id="user-welcome" class="absolute top-4 right-4 text-lg text-white" aria-live="polite"></h2>
     <div class="flex justify-around w-full absolute top-[20%] xmb-menu" role="menubar">
       <div class="text-center cursor-pointer xmb-item active" data-menu="users" role="menuitem" aria-haspopup="true" tabindex="0">
         <img src="https://via.placeholder.com/64?text=Users" alt="Users">
@@ -550,11 +280,13 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
   </div>
   <script>
     // Constants
-    const API_URL = 'http://localhost:3000';
+    const API_URL = 'https://ps3pro-com.onrender.com'; // Updated for Render deployment
     let token = null;
     let user = null;
     let snakeHighScore = 0;
     let platformerHighScore = 0;
+    let isProcessingKey = false; // Prevent rapid keypresses
+    const DEBOUNCE_MS = 200; // Increased debounce for smoother navigation
 
     // DOM Elements
     const userWelcome = document.getElementById('user-welcome');
@@ -562,6 +294,8 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
     const background = document.getElementById('background');
     const xmbContainer = document.getElementById('xmb-container');
     const loginScreen = document.getElementById('login-screen');
+    const loadingScreen = document.getElementById('loading-screen');
+    const gameCanvas = document.getElementById('game-canvas');
 
     // Utility function to sanitize input
     function sanitizeInput(input) {
@@ -570,11 +304,26 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
       return div.innerHTML;
     }
 
-    // API Helper
+    // Debounce utility
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // API Helper with caching
+    const responseCache = new Map();
     async function apiRequest(endpoint, method = 'GET', body = null, auth = true) {
-      const headers = { 'Content-Type': 'application/json' };
-      if (auth && token) headers['Authorization'] = `Bearer ${token}`;
+      const cacheKey = `${method}:${endpoint}:${JSON.stringify(body)}`;
+      if (responseCache.has(cacheKey)) {
+        return responseCache.get(cacheKey);
+      }
+      loadingScreen.classList.add('active');
       try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (auth && token) headers['Authorization'] = `Bearer ${token}`;
         const response = await fetch(`${API_URL}${endpoint}`, {
           method,
           headers,
@@ -583,10 +332,14 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        return response.json();
+        const data = await response.json();
+        responseCache.set(cacheKey, data);
+        return data;
       } catch (e) {
         console.error(`API request failed: ${endpoint}`, e);
         throw new Error('Failed to connect to the server. Please try again later.');
+      } finally {
+        loadingScreen.classList.remove('active');
       }
     }
 
@@ -594,6 +347,7 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
     async function loadUserData() {
       if (token) {
         try {
+          loadingScreen.classList.add('active');
           const userData = await apiRequest('/user');
           const savedData = await apiRequest('/load');
           user = {
@@ -611,6 +365,8 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           token = null;
           user = null;
           updateUserUI();
+        } finally {
+          loadingScreen.classList.remove('active');
         }
       }
     }
@@ -692,61 +448,35 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
       document.querySelector('.xmb-item[data-menu="users"]').focus();
     };
 
-    document.querySelector('.submenu-item[data-action="signout"]').addEventListener('click', () => {
-      token = null;
-      user = null;
-      snakeHighScore = 0;
-      platformerHighScore = 0;
-      updateUserUI();
-      document.querySelector('.xmb-item[data-menu="users"]').focus();
-    });
-
-    document.querySelectorAll('.submenu-item[data-theme]').forEach(item => {
-      item.addEventListener('click', () => {
-        if (user) {
-          user.theme = item.dataset.theme;
-          updateUserUI();
-          saveUserData();
-        }
-      });
-    });
-
-    document.querySelector('[data-setting="animations"]').addEventListener('click', () => {
-      if (user) {
-        user.animations = !user.animations;
-        updateUserUI();
-        saveUserData();
-      }
-    });
-
-    document.querySelector('[data-setting="fastMode"]').addEventListener('click', () => {
-      if (user) {
-        user.fastMode = !user.fastMode;
-        updateUserUI();
-        saveUserData();
-      }
-    });
-
-    // Performance and GPU Detection
-    let performanceLevel = 'high';
-    let useWebGL = false;
-    const testPerformance = () => {
-      const start = performance.now();
-      let sum = 0;
-      for (let i = 0; i < 1000000; i++) sum += Math.sqrt(i);
-      const time = performance.now() - start;
-      performanceLevel = time > 50 ? 'low' : time > 30 ? 'medium' : 'high';
-      const canvas = document.createElement('canvas');
-      useWebGL = !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
-      if (!useWebGL) console.warn('WebGL not supported, falling back to Canvas 2D');
-    };
-    testPerformance();
-
     // XMB Navigation
     const items = document.querySelectorAll('.xmb-item');
     const submenus = document.querySelectorAll('.submenu');
-    const gameCanvas = document.getElementById('game-canvas');
     let currentGame = null;
+
+    const navigateXMB = debounce((direction) => {
+      if (isProcessingKey) return;
+      isProcessingKey = true;
+      const activeItem = document.querySelector('.xmb-item.active');
+      const currentIndex = Array.from(items).indexOf(activeItem);
+      let newIndex = direction === 'right' ? (currentIndex + 1) % items.length : (currentIndex - 1 + items.length) % items.length;
+
+      items.forEach(i => {
+        i.classList.remove('active');
+        i.setAttribute('tabindex', '-1');
+      });
+      items[newIndex].classList.add('active');
+      items[newIndex].setAttribute('tabindex', '0');
+      items[newIndex].focus();
+      submenus.forEach(sm => sm.classList.remove('active', 'block'));
+      const menuId = items[newIndex].dataset.menu + '-submenu';
+      const submenu = document.getElementById(menuId);
+      submenu.classList.add('active', 'block');
+      submenu.querySelector('.submenu-item').focus();
+      gameCanvas.classList.remove('active');
+      loginScreen.classList.remove('active');
+      if (currentGame) currentGame.stop();
+      setTimeout(() => isProcessingKey = false, DEBOUNCE_MS);
+    }, DEBOUNCE_MS);
 
     items.forEach((item, index) => {
       item.addEventListener('click', () => {
@@ -778,32 +508,12 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
         cancelSignIn();
         return;
       }
-      const activeItem = document.querySelector('.xmb-item.active');
-      const currentIndex = Array.from(items).indexOf(activeItem);
-      let newIndex;
-
       if (e.key === 'ArrowRight') {
-        newIndex = (currentIndex + 1) % items.length;
+        e.preventDefault();
+        navigateXMB('right');
       } else if (e.key === 'ArrowLeft') {
-        newIndex = (currentIndex - 1 + items.length) % items.length;
-      }
-
-      if (newIndex !== undefined) {
-        items.forEach(i => {
-          i.classList.remove('active');
-          i.setAttribute('tabindex', '-1');
-        });
-        items[newIndex].classList.add('active');
-        items[newIndex].setAttribute('tabindex', '0');
-        items[newIndex].focus();
-        submenus.forEach(sm => sm.classList.remove('active', 'block'));
-        const menuId = items[newIndex].dataset.menu + '-submenu';
-        const submenu = document.getElementById(menuId);
-        submenu.classList.add('active', 'block');
-        submenu.querySelector('.submenu-item').focus();
-        gameCanvas.classList.remove('active');
-        loginScreen.classList.remove('active');
-        if (currentGame) currentGame.stop();
+        e.preventDefault();
+        navigateXMB('left');
       }
     });
 
@@ -811,16 +521,15 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
     let gl = null;
     let ctx = gameCanvas.getContext('2d');
     let program, positionLocation, resolutionLocation, colorLocation, timeLocation;
+    let bufferCache = new Map();
 
     const initWebGL = () => {
       try {
         gl = gameCanvas.getContext('webgl') || gameCanvas.getContext('experimental-webgl');
         if (!gl) {
           console.warn('WebGL initialization failed, using Canvas 2D');
-          useWebGL = false;
           return false;
         }
-
         const vertexShaderSource = `
           attribute vec2 a_position;
           uniform vec2 u_resolution;
@@ -829,7 +538,7 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
             vec2 zeroToOne = a_position / u_resolution;
             vec2 zeroToTwo = zeroToOne * 2.0;
             vec2 clipSpace = zeroToTwo - 1.0;
-            float pulse = 0.95 + 0.1 * sin(u_time * 0.01);
+            float pulse = 0.95 + 0.05 * sin(u_time * 0.005); /* Smoother pulse */
             gl_Position = vec4(clipSpace * vec2(1, -1) * pulse, 0, 1);
           }
         `;
@@ -838,11 +547,10 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           uniform vec4 u_color;
           uniform float u_time;
           void main() {
-            float glow = 0.8 + 0.2 * sin(u_time * 0.01);
+            float glow = 0.8 + 0.1 * sin(u_time * 0.005); /* Smoother glow */
             gl_FragColor = vec4(u_color.rgb * glow, u_color.a);
           }
         `;
-
         const createShader = (type, source) => {
           const shader = gl.createShader(type);
           gl.shaderSource(shader, source);
@@ -854,15 +562,12 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           }
           return shader;
         };
-
         const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource);
         const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource);
         if (!vertexShader || !fragmentShader) {
           gl = null;
-          useWebGL = false;
           return false;
         }
-
         program = gl.createProgram();
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
@@ -871,10 +576,8 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           console.error('Program link error:', gl.getProgramInfoLog(program));
           gl.deleteProgram(program);
           gl = null;
-          useWebGL = false;
           return false;
         }
-
         gl.useProgram(program);
         positionLocation = gl.getAttribLocation(program, 'a_position');
         resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
@@ -885,23 +588,32 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
       } catch (e) {
         console.error('WebGL initialization error:', e);
         gl = null;
-        useWebGL = false;
         return false;
       }
     };
 
     function drawRect(x, y, width, height, color, time) {
-      if (!useWebGL || !gl) return;
-      const buffer = gl.createBuffer();
+      if (!gl) {
+        ctx.fillStyle = `rgb(${color[0]*255}, ${color[1]*255}, ${color[2]*255})`;
+        ctx.fillRect(x, y, width, height);
+        return;
+      }
+      const cacheKey = `${x}:${y}:${width}:${height}`;
+      let buffer = bufferCache.get(cacheKey);
+      if (!buffer) {
+        buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+          x, y,
+          x + width, y,
+          x, y + height,
+          x + width, y,
+          x + width, y + height,
+          x, y + height
+        ]), gl.STATIC_DRAW);
+        bufferCache.set(cacheKey, buffer);
+      }
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        x, y,
-        x + width, y,
-        x, y + height,
-        x + width, y,
-        x + width, y + height,
-        x, y + height
-      ]), gl.STATIC_DRAW);
       gl.enableVertexAttribArray(positionLocation);
       gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
       gl.uniform4f(colorLocation, color[0], color[1], color[2], 1);
@@ -912,13 +624,14 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
     // Game Logic
     const gameSettings = {
       snake: {
-        speed: user && user.fastMode ? 20 : (performanceLevel === 'high' ? 15 : performanceLevel === 'medium' ? 10 : 6),
-        particles: user && user.fastMode ? 5 : (performanceLevel === 'high' ? 30 : 15)
+        speed: user && user.fastMode ? 20 : 15,
+        particles: user && user.fastMode ? 5 : 10, /* Reduced particles */
+        fps: 60 /* Capped FPS */
       },
       platformer: {
-        jumpHeight: user && user.fastMode ? 20 : (performanceLevel === 'high' ? 15 : 10),
-        speed: user && user.fastMode ? 7 : (performanceLevel === 'high' ? 5 : 3),
-        fps: user && user.fastMode ? 120 : 60
+        jumpHeight: user && user.fastMode ? 20 : 15,
+        speed: user && user.fastMode ? 7 : 5,
+        fps: 60 /* Capped FPS */
       }
     };
 
@@ -942,7 +655,7 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
         this.running = true;
         gameCanvas.classList.add('active');
         xmbContainer.classList.add('hidden');
-        if (useWebGL) initWebGL();
+        initWebGL();
         document.removeEventListener('keydown', this.handleInput);
         document.addEventListener('keydown', this.handleInput.bind(this));
         this.gameLoop(performance.now());
@@ -957,21 +670,17 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           saveUserData();
         }
         if (this.multiplayer && user) {
-          try {
-            localStorage.setItem('snakeMultiplayer', JSON.stringify(this.otherSnakes.slice(0, 5)));
-          } catch (e) {
-            console.warn('Failed to save multiplayer state:', e);
-          }
+          localStorage.setItem('snakeMultiplayer', JSON.stringify(this.otherSnakes.slice(0, 5)));
         }
         document.querySelector('.xmb-item[data-menu="games"]').focus();
       }
-      handleInput(e) {
+      handleInput = debounce((e) => {
         if (e.key === 'ArrowUp' && this.dy === 0) { this.dx = 0; this.dy = -1; }
         else if (e.key === 'ArrowDown' && this.dy === 0) { this.dx = 0; this.dy = 1; }
         else if (e.key === 'ArrowLeft' && this.dx === 0) { this.dx = -1; this.dy = 0; }
         else if (e.key === 'ArrowRight' && this.dx === 0) { this.dx = 1; this.dy = 0; }
         else if (e.key === 'Escape') this.stop();
-      }
+      }, DEBOUNCE_MS);
       update(time) {
         if (!this.running) return;
         const delta = time - this.lastUpdate;
@@ -987,7 +696,7 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           this.score += 10;
           this.food = { x: Math.floor(Math.random() * this.tileCount), y: Math.floor(Math.random() * this.tileCount) };
           for (let i = 0; i < gameSettings.snake.particles; i++) {
-            this.particles.push({ x: head.x * this.gridSize, y: head.y * this.gridSize, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, life: 50 });
+            this.particles.push({ x: head.x * this.gridSize, y: head.y * this.gridSize, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, life: 30 });
           }
         } else {
           this.snake.pop();
@@ -996,13 +705,13 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
         if (this.multiplayer) {
           this.otherSnakes = this.otherSnakes.map(s => ({
             ...s,
-            x: Math.max(0, Math.min(this.tileCount - 1, s.x + (Math.random() > 0.5 ? 1 : -1) * (Math.random() > 0.5 ? 1 : 0))),
-            y: Math.max(0, Math.min(this.tileCount - 1, s.y + (Math.random() > 0.5 ? 1 : -1) * (Math.random() > 0.5 ? 1 : 0)))
+            x: Math.max(0, Math.min(this.tileCount - 1, s.x + (Math.random() > 0.5 ? 1 : -1))),
+            y: Math.max(0, Math.min(this.tileCount - 1, s.y + (Math.random() > 0.5 ? 1 : -1)))
           }));
         }
       }
       draw(time) {
-        if (useWebGL && gl) {
+        if (gl) {
           gl.clear(gl.COLOR_BUFFER_BIT);
           drawRect(0, 0, 800, 600, [0, 0, 0, 1], time);
           this.snake.forEach(s => drawRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2, [0, 1, 0, 1], time));
@@ -1018,7 +727,7 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           this.snake.forEach(s => ctx.fillRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2));
           ctx.fillStyle = '#f00';
           ctx.beginPath();
-          ctx.arc((this.food.x + 0.5) * this.gridSize, (this.food.y + 0.5) * this.gridSize, (this.gridSize - 2) / 2 * (1 + 0.2 * Math.sin(time * 0.005)), 0, Math.PI * 2);
+          ctx.arc((this.food.x + 0.5) * this.gridSize, (this.food.y + 0.5) * this.gridSize, (this.gridSize - 2) / 2, 0, Math.PI * 2);
           ctx.fill();
           if (this.multiplayer) {
             ctx.fillStyle = '#00f';
@@ -1063,7 +772,7 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
         this.running = true;
         gameCanvas.classList.add('active');
         xmbContainer.classList.add('hidden');
-        if (useWebGL) initWebGL();
+        initWebGL();
         document.removeEventListener('keydown', this.handleInput);
         document.removeEventListener('keyup', this.handleKeyUp);
         document.addEventListener('keydown', this.handleInput.bind(this));
@@ -1081,23 +790,19 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           saveUserData();
         }
         if (this.multiplayer && user && this.otherPlayer) {
-          try {
-            localStorage.setItem('platformerMultiplayer', JSON.stringify(this.otherPlayer));
-          } catch (e) {
-            console.warn('Failed to save multiplayer state:', e);
-          }
+          localStorage.setItem('platformerMultiplayer', JSON.stringify(this.otherPlayer));
         }
         document.querySelector('.xmb-item[data-menu="games"]').focus();
       }
-      handleInput(e) {
+      handleInput = debounce((e) => {
         if (e.key === 'ArrowLeft') this.player.vx = -gameSettings.platformer.speed;
         else if (e.key === 'ArrowRight') this.player.vx = gameSettings.platformer.speed;
         else if (e.key === 'ArrowUp' && this.isOnGround()) this.player.vy = -gameSettings.platformer.jumpHeight;
         else if (e.key === 'Escape') this.stop();
-      }
-      handleKeyUp(e) {
+      }, DEBOUNCE_MS);
+      handleKeyUp = debounce((e) => {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') this.player.vx = 0;
-      }
+      }, DEBOUNCE_MS);
       isOnGround(player = this.player) {
         return this.platforms.some(p => 
           player.y + player.height >= p.y &&
@@ -1109,7 +814,7 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
       update(time) {
         if (!this.running) return;
         const delta = time - this.lastUpdate;
-        if (delta < 1000 / Math.min(gameSettings.platformer.fps, 120)) return;
+        if (delta < 1000 / gameSettings.platformer.fps) return;
         this.lastUpdate = time;
         this.player.x = Math.max(0, Math.min(800 - this.player.width, this.player.x + this.player.vx));
         this.player.y += this.player.vy;
@@ -1148,7 +853,7 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
         }
       }
       draw(time) {
-        if (useWebGL && gl) {
+        if (gl) {
           gl.clear(gl.COLOR_BUFFER_BIT);
           drawRect(0, 0, 800, 600, [0, 0, 0, 1], time);
           drawRect(this.player.x, this.player.y, this.player.width, this.player.height, [0, 0, 1, 1], time);
@@ -1161,12 +866,12 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           ctx.fillRect(0, 0, 800, 600);
           ctx.fillStyle = '#00f';
           ctx.beginPath();
-          ctx.arc(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, this.player.width / 2 * (1 + 0.2 * Math.sin(time * 0.005)), 0, Math.PI * 2);
+          ctx.arc(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, this.player.width / 2, 0, Math.PI * 2);
           ctx.fill();
           if (this.multiplayer && this.otherPlayer) {
             ctx.fillStyle = '#f00';
             ctx.beginPath();
-            ctx.arc(this.otherPlayer.x + this.otherPlayer.width / 2, this.otherPlayer.y + this.otherPlayer.height / 2, this.otherPlayer.width / 2 * (1 + 0.2 * Math.sin(time * 0.005)), 0, Math.PI * 2);
+            ctx.arc(this.otherPlayer.x + this.otherPlayer.width / 2, this.otherPlayer.y + this.otherPlayer.height / 2, this.otherPlayer.width / 2, 0, Math.PI * 2);
             ctx.fill();
           }
           ctx.fillStyle = '#555';
@@ -1189,6 +894,49 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
       }
     }
 
+    // Event Listeners
+    document.querySelector('.submenu-item[data-action="login"]').addEventListener('click', () => {
+      loginScreen.classList.add('active');
+      xmbContainer.classList.add('hidden');
+      if (currentGame) currentGame.stop();
+      document.getElementById('username').focus();
+    });
+
+    document.querySelector('.submenu-item[data-action="signout"]').addEventListener('click', () => {
+      token = null;
+      user = null;
+      snakeHighScore = 0;
+      platformerHighScore = 0;
+      updateUserUI();
+      document.querySelector('.xmb-item[data-menu="users"]').focus();
+    });
+
+    document.querySelectorAll('.submenu-item[data-theme]').forEach(item => {
+      item.addEventListener('click', () => {
+        if (user) {
+          user.theme = item.dataset.theme;
+          updateUserUI();
+          saveUserData();
+        }
+      });
+    });
+
+    document.querySelector('[data-setting="animations"]').addEventListener('click', () => {
+      if (user) {
+        user.animations = !user.animations;
+        updateUserUI();
+        saveUserData();
+      }
+    });
+
+    document.querySelector('[data-setting="fastMode"]').addEventListener('click', () => {
+      if (user) {
+        user.fastMode = !user.fastMode;
+        updateUserUI();
+        saveUserData();
+      }
+    });
+
     document.querySelectorAll('.submenu-item[data-game]').forEach(item => {
       item.addEventListener('click', () => {
         if (currentGame) currentGame.stop();
@@ -1196,7 +944,7 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           currentGame = new SnakeGame(user != null);
           currentGame.start();
         } else if (item.dataset.game === 'platformer') {
-          currentgame = new PlatformerGame(user != null);
+          currentGame = new PlatformerGame(user != null);
           currentGame.start();
         }
       });
@@ -1206,13 +954,6 @@ Below are the updated `index.html`, `server.js`, and `package.json` files with t
           item.click();
         }
       });
-    });
-
-    document.querySelector('.submenu-item[data-action="login"]').addEventListener('click', () => {
-      loginScreen.classList.add('active');
-      xmbContainer.classList.add('hidden');
-      if (currentGame) currentGame.stop();
-      document.getElementById('username').focus();
     });
 
     // Initialize
