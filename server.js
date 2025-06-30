@@ -1,3 +1,4 @@
+```javascript
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -9,42 +10,44 @@ const morgan = require('morgan');
 const fs = require('fs');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000;
+const host = '0.0.0.0';
 const secretKey = process.env.JWT_SECRET || 'ps3-pro-site-secret';
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ps3prosite';
 const publicPath = path.join(__dirname, 'public');
 const indexPath = path.join(publicPath, 'index.html');
+const responseCache = new Map();
 
-// Check if public directory and index.html exist
-if (!fs.existsSync(publicPath)) {
-  console.error(`❌ Public directory not found at: ${publicPath}`);
-  console.error('Please create a "public" directory and place index.html in it.');
-  process.exit(1);
-}
-if (!fs.existsSync(indexPath)) {
-  console.error(`❌ index.html not found at: ${indexPath}`);
-  console.error('Please ensure index.html exists in the public directory.');
+// Check public directory and index.html
+if (!fs.existsSync(publicPath) || !fs.existsSync(indexPath)) {
+  console.error(`❌ Public directory or index.html not found at: ${publicPath}`);
   process.exit(1);
 }
 
-// MongoDB connection with retry logic
-const connectWithRetry = (retries = 5, delay = 5000) => {
-  console.log(`Attempting MongoDB connection (attempt ${6 - retries})...`);
-  mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => {
-      console.error(`❌ MongoDB connection error: ${err.message}`);
-      if (retries > 1) {
-        console.log(`Retrying in ${delay / 1000} seconds...`);
-        setTimeout(() => connectWithRetry(retries - 1, delay), delay);
-      } else {
-        console.error('❌ Failed to connect to MongoDB after retries. Server will continue without MongoDB.');
-      }
+// MongoDB connection with enhanced retry logic
+const connectWithRetry = async (retries = 10, delay = 5000) => {
+  console.log(`Attempting MongoDB connection (attempt ${11 - retries})...`);
+  try {
+    await mongoose.connect(mongoUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 10000, // Increased timeout
+      connectTimeoutMS: 10000
     });
+    console.log('✅ Connected to MongoDB');
+  } catch (err) {
+    console.error(`❌ MongoDB connection error: ${err.message}`);
+    if (retries > 1) {
+      console.log(`Retrying in ${delay / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return connectWithRetry(retries - 1, delay * 1.2);
+    }
+    console.error('❌ Failed to connect to MongoDB after retries');
+  }
 };
 connectWithRetry();
 
-// Define MongoDB schemas
+// MongoDB schemas
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -60,20 +63,25 @@ const User = mongoose.model('User', UserSchema);
 const Save = mongoose.model('Save', SaveSchema);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'https://ps3pro-com.onrender.com',
+  credentials: true
+}));
 app.use(express.json());
-app.use(morgan('dev')); // Log HTTP requests
+app.use(morgan('dev', {
+  stream: { write: msg => console.log(msg.trim()) }
+}));
 app.use(express.static(publicPath, {
-  index: false, // Disable automatic index.html serving to control via route
+  index: false,
   setHeaders: (res, path) => {
     console.log(`Serving static file: ${path}`);
   }
-})); // Serve static files from 'public'
+}));
 
-// Rate limiting for sign-in endpoint
+// Rate limiting (relaxed for testing)
 const signInLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // 10 requests per minute
+  windowMs: 60 * 1000,
+  max: 20, // Increased limit
   message: 'Too many sign-in attempts, please try again later.'
 });
 app.use('/signin', signInLimiter);
@@ -81,22 +89,21 @@ app.use('/signin', signInLimiter);
 // Input validation
 const validateCredentials = (username, password, provider) => {
   if (!username || !password || !provider) {
-    console.warn('Invalid credentials: missing username, password, or provider');
-    return false;
+    console.warn(`Invalid credentials: username=${username}, provider=${provider}`);
+    return { valid: false, error: 'Missing username, password, or provider' };
   }
   if (password.length < 6) {
     console.warn('Invalid credentials: password too short');
-    return false;
+    return { valid: false, error: 'Password must be at least 6 characters' };
   }
   if (provider === 'psn') {
-    return /^[a-zA-Z0-9_-]{3,16}$/.test(username);
-  } else {
-    return provider === 'hotmail'
-      ? /^[\w.-]+@(hotmail|outlook)\.com$/.test(username)
-      : provider === 'gmail'
-      ? /^[\w.-]+@gmail\.com$/.test(username)
-      : false;
+    return { valid: /^[a-zA-Z0-9_-]{3,16}$/.test(username), error: 'Invalid PSN username' };
+  } else if (provider === 'gmail') {
+    return { valid: /^[\w.-]+@gmail\.com$/.test(username), error: 'Invalid Gmail address' };
+  } else if (provider === 'hotmail') {
+    return { valid: /^[\w.-]+@(hotmail|outlook)\.com$/.test(username), error: 'Invalid Hotmail/Outlook address' };
   }
+  return { valid: false, error: 'Invalid provider' };
 };
 
 // Routes
@@ -106,28 +113,31 @@ app.get('/ping', (req, res) => {
 });
 
 app.post('/signin', async (req, res, next) => {
+  console.log(`Received /signin request: ${JSON.stringify(req.body)}`);
   const { username, password, provider } = req.body;
-  if (!validateCredentials(username, password, provider)) {
-    return res.status(400).json({ error: 'Invalid username, password, or provider' });
+  const validation = validateCredentials(username, password, provider);
+  if (!validation.valid) {
+    console.warn(`Sign-in failed: ${validation.error}`);
+    return res.status(400).json({ error: validation.error });
   }
-
   try {
     let user = await User.findOne({ username, provider });
     if (!user) {
+      console.log(`Creating new user: ${username} (${provider})`);
       const hashedPassword = await bcrypt.hash(password, 10);
       user = await User.create({ username, password: hashedPassword, provider });
-      console.log(`Created new user: ${username} (${provider})`);
     } else {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        console.warn(`Failed login attempt for ${username} (${provider}): invalid password`);
+        console.warn(`Sign-in failed for ${username} (${provider}): invalid password`);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
     }
-
     const token = jwt.sign({ username, provider }, secretKey, { expiresIn: '1h' });
+    console.log(`Sign-in successful for ${username} (${provider})`);
     res.json({ token });
   } catch (e) {
+    console.error(`Sign-in error: ${e.message}`);
     next(e);
   }
 });
@@ -138,9 +148,9 @@ app.post('/verify', (req, res, next) => {
     console.warn('Verify request failed: No token provided');
     return res.status(401).json({ error: 'No token provided' });
   }
-
   try {
     jwt.verify(token, secretKey);
+    console.log('Token verified successfully');
     res.status(200).json({ valid: true });
   } catch (e) {
     console.warn(`Token verification failed: ${e.message}`);
@@ -154,12 +164,19 @@ app.get('/user', async (req, res, next) => {
     console.warn('User request failed: No token provided');
     return res.status(401).json({ error: 'No token provided' });
   }
-
   try {
     const decoded = jwt.verify(token, secretKey);
+    const cacheKey = `user:${decoded.username}:${decoded.provider}`;
+    if (responseCache.has(cacheKey)) {
+      console.log(`Serving cached user data: ${cacheKey}`);
+      return res.json(responseCache.get(cacheKey));
+    }
     const user = await User.findOne({ username: decoded.username, provider: decoded.provider });
     if (user) {
-      res.json({ username: user.username, provider: user.provider });
+      const userData = { username: user.username, provider: user.provider };
+      responseCache.set(cacheKey, userData);
+      console.log(`Fetched user data: ${user.username} (${user.provider})`);
+      res.json(userData);
     } else {
       console.warn(`User not found: ${decoded.username} (${decoded.provider})`);
       res.status(404).json({ error: 'User not found' });
@@ -175,7 +192,6 @@ app.post('/save', async (req, res, next) => {
     console.warn('Save request failed: No token provided');
     return res.status(401).json({ error: 'No token provided' });
   }
-
   try {
     const decoded = jwt.verify(token, secretKey);
     const saveData = {
@@ -185,7 +201,8 @@ app.post('/save', async (req, res, next) => {
       snakeHighScore: Number(req.body.snakeHighScore) || 0,
       platformerHighScore: Number(req.body.platformerHighScore) || 0
     };
-
+    const cacheKey = `save:${decoded.username}`;
+    responseCache.set(cacheKey, saveData);
     await Save.findOneAndUpdate(
       { username: decoded.username },
       { data: saveData },
@@ -204,34 +221,39 @@ app.get('/load', async (req, res, next) => {
     console.warn('Load request failed: No token provided');
     return res.status(401).json({ error: 'No token provided' });
   }
-
   try {
     const decoded = jwt.verify(token, secretKey);
+    const cacheKey = `save:${decoded.username}`;
+    if (responseCache.has(cacheKey)) {
+      console.log(`Serving cached save data: ${cacheKey}`);
+      return res.json(responseCache.get(cacheKey));
+    }
     const save = await Save.findOne({ username: decoded.username });
-    res.json(save?.data || {});
+    const data = save?.data || {};
+    responseCache.set(cacheKey, data);
+    console.log(`Fetched save data for ${decoded.username}`);
+    res.json(data);
   } catch (e) {
     next(e);
   }
 });
 
-// Serve index.html for root route
 app.get('/', (req, res) => {
   console.log(`Serving index.html from: ${indexPath}`);
-  res.sendFile(indexPath, (err) => {
+  res.sendFile(indexPath, err => {
     if (err) {
       console.error(`❌ Failed to serve index.html: ${err.message}`);
-      res.status(404).json({ error: 'index.html not found. Please ensure it exists in the public directory.' });
+      res.status(404).json({ error: 'index.html not found' });
     }
   });
 });
 
-// Catch-all route for single-page application
 app.get('*', (req, res) => {
   console.log(`Serving index.html for catch-all route: ${req.path}`);
-  res.sendFile(indexPath, (err) => {
+  res.sendFile(indexPath, err => {
     if (err) {
       console.error(`❌ Failed to serve index.html: ${err.message}`);
-      res.status(404).json({ error: 'index.html not found. Please ensure it exists in the public directory.' });
+      res.status(404).json({ error: 'index.html not found' });
     }
   });
 });
@@ -239,17 +261,14 @@ app.get('*', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(`❌ Server error: ${err.message}`, err.stack);
-  res.status(500).json({ error: 'Internal server error' });
+  res.status(500).json({ error: 'Internal server error', details: err.message });
 });
 
 // Start server
-app.listen(port, () => {
-  console.log(`🟢 Server running at http://localhost:${port}`);
-}).on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${port} is in use. Please free the port or use a different one.`);
-  } else {
-    console.error(`❌ Server startup error: ${err.message}`);
-  }
+app.listen(port, host, () => {
+  console.log(`🟢 Server running at http://${host}:${port}`);
+}).on('error', err => {
+  console.error(`❌ Server startup error: ${err.message}`);
   process.exit(1);
 });
+```
