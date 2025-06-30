@@ -2,37 +2,60 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const secretKey = 'ps3-pro-site-secret'; // 🔐 You can move this to an env var too
+const secretKey = process.env.JWT_SECRET || 'ps3-pro-site-secret';
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ps3prosite';
 
-// ✅ Connect to MongoDB (non-SRV URI for Render)
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+// MongoDB connection with retry logic
+const connectWithRetry = (retries = 5, delay = 5000) => {
+  mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('✅ Connected to MongoDB'))
+    .catch(err => {
+      console.error(`❌ MongoDB connection error (attempt ${6 - retries}):`, err);
+      if (retries > 1) {
+        setTimeout(() => connectWithRetry(retries - 1, delay), delay);
+      } else {
+        console.error('❌ Failed to connect to MongoDB after retries');
+        process.exit(1);
+      }
+    });
+};
+connectWithRetry();
 
-// ✅ Define MongoDB schemas
+// Define MongoDB schemas
 const UserSchema = new mongoose.Schema({
-  username: String,
-  password: String,
-  provider: String
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  provider: { type: String, required: true }
 });
 
 const SaveSchema = new mongoose.Schema({
-  username: String,
-  data: Object
+  username: { type: String, required: true, unique: true },
+  data: { type: Object, required: true }
 });
 
 const User = mongoose.model('User', UserSchema);
 const Save = mongoose.model('Save', SaveSchema);
 
-// ✅ Middleware
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-const validateCredentials = (username, provider) => {
-  if (!username || !provider) return false;
+// Rate limiting for sign-in endpoint
+const signInLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 requests per minute
+  message: 'Too many sign-in attempts, please try again later.'
+});
+app.use('/signin', signInLimiter);
+
+const validateCredentials = (username, password, provider) => {
+  if (!username || !password || !provider) return false;
+  if (password.length < 6) return false;
   if (provider === 'psn') {
     return /^[a-zA-Z0-9_-]{3,16}$/.test(username);
   } else {
@@ -44,47 +67,53 @@ const validateCredentials = (username, provider) => {
   }
 };
 
-// ✅ Routes
+// Routes
 app.get('/ping', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
 app.post('/signin', async (req, res) => {
   const { username, password, provider } = req.body;
-  if (!username || !password || !provider) {
-    return res.status(400).json({ error: 'Missing fields' });
+  if (!validateCredentials(username, password, provider)) {
+    return res.status(400).json({ error: 'Invalid username, password, or provider' });
   }
 
-  if (!validateCredentials(username, provider)) {
-    return res.status(400).json({ error: 'Invalid email or PSN ID' });
-  }
+  try {
+    let user = await User.findOne({ username, provider });
+    if (!user) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user = await User.create({ username, password: hashedPassword, provider });
+    } else {
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+    }
 
-  let user = await User.findOne({ username, provider });
-  if (!user) {
-    user = await User.create({ username, password, provider });
-  } else if (user.password !== password) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    const token = jwt.sign({ username, provider }, secretKey, { expiresIn: '1h' });
+    res.json({ token });
+  } catch (e) {
+    console.error('Sign-in error:', e);
+    res.status(500).json({ error: 'Server error during sign-in' });
   }
-
-  const token = jwt.sign({ username, provider }, secretKey, { expiresIn: '1h' });
-  res.json({ token });
 });
 
 app.post('/verify', (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
+  if (!token) return res.status(401).json({ error: 'No token provided' });
 
   try {
     jwt.verify(token, secretKey);
     res.status(200).json({ valid: true });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
+  } catch (e) {
+    console.error('Token verification error:', e);
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 });
 
 app.get('/user', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
+  if (!token) return res.status(401).json({ error: 'No token provided' });
 
   try {
     const decoded = jwt.verify(token, secretKey);
@@ -94,14 +123,15 @@ app.get('/user', async (req, res) => {
     } else {
       res.status(404).json({ error: 'User not found' });
     }
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
+  } catch (e) {
+    console.error('User fetch error:', e);
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 });
 
 app.post('/save', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
+  if (!token) return res.status(401).json({ error: 'No token provided' });
 
   try {
     const decoded = jwt.verify(token, secretKey);
@@ -120,25 +150,27 @@ app.post('/save', async (req, res) => {
     );
 
     res.status(200).json({ status: 'saved' });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
+  } catch (e) {
+    console.error('Save data error:', e);
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 });
 
 app.get('/load', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
+  if (!token) return res.status(401).json({ error: 'No token provided' });
 
   try {
     const decoded = jwt.verify(token, secretKey);
     const save = await Save.findOne({ username: decoded.username });
     res.json(save?.data || {});
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
+  } catch (e) {
+    console.error('Load data error:', e);
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 });
 
-// ✅ Start server
+// Start server
 app.listen(port, () => {
   console.log(`🟢 Server running at http://localhost:${port}`);
 });
