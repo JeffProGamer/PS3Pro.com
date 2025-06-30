@@ -10,165 +10,8 @@
       margin: 0;
       overflow: hidden;
       background: #000;
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       color: #fff;
-    }
-    #boot-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 20;
-      animation: fadeOut 3s forwards 2s;
-    }
-    #boot-screen img {
-      width: 200px;
-      animation: pulse 1.5s infinite ease-in-out; /* Slower pulse */
-      will-change: transform, opacity;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 0.7; }
-      50% { transform: scale(1.1); opacity: 1; } /* Reduced scale */
-    }
-    @keyframes fadeOut {
-      to { opacity: 0; visibility: hidden; }
-    }
-    #background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: -1;
-      background: linear-gradient(135deg, #1a1a1a, #4a4a4a, #1a1a1a);
-      animation: waveAnimation 15s infinite linear; /* Slower wave */
-      filter: brightness(1.2); /* Lowered brightness */
-      will-change: background-position;
-    }
-    #background.theme-blue {
-      background: linear-gradient(135deg, #1a1a3a, #4a4a8a, #1a1a3a);
-    }
-    #background.theme-red {
-      background: linear-gradient(135deg, #3a1a1a, #8a4a4a, #3a1a1a);
-    }
-    @keyframes waveAnimation {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 200% 50%; }
-    }
-    .xmb-item {
-      transition: all 0.4s ease; /* Smoother transition */
-      will-change: transform, opacity;
-    }
-    .xmb-item img {
-      width: 64px;
-      height: 64px;
-      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
-    }
-    .xmb-item:hover {
-      transform: scale(1.1); /* Reduced scale */
-      filter: brightness(1.2);
-    }
-    .xmb-item.active {
-      transform: scale(1.2);
-      opacity: 1;
-    }
-    .xmb-item:not(.active) {
-      opacity: 0.6; /* Slightly higher for visibility */
-    }
-    .xmb-item.active img {
-      animation: none; /* Removed frameAnimation to reduce flicker */
-    }
-    .submenu {
-      display: none;
-      background: rgba(0, 0, 0, 0.9);
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); /* Reduced shadow */
-      will-change: opacity, transform;
-    }
-    .submenu.active {
-      animation: slideIn 0.5s ease;
-      display: block;
-    }
-    .submenu-item {
-      transition: all 0.4s ease;
-      padding: 10px;
-      margin: 5px;
-    }
-    .submenu-item:hover {
-      transform: translateX(8px);
-      background: rgba(255, 255, 255, 0.2);
-    }
-    #game-canvas, #login-screen {
-      display: none;
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-      z-index: 10;
-    }
-    #game-canvas.active, #login-screen.active {
-      display: block;
-    }
-    .hidden {
-      display: none;
-    }
-    #login-screen {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    #login-form {
-      background: rgba(0, 0, 0, 0.9);
-      padding: 40px;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-      width: 400px;
-      text-align: center;
-    }
-    #login-form input, #login-form select {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #555;
-      border-radius: 5px;
-      background: #222;
-      color: #fff;
-      transition: all 0.4s ease;
-    }
-    #login-form input:focus, #login-form select:focus {
-      border-color: #fff;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-    }
-    #login-form button {
-      padding: 10px 20px;
-      margin: 5px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: all 0.4s ease;
-    }
-    #login-form button:hover {
-      transform: scale(1.1);
-      filter: brightness(1.2);
-    }
-    #login-form button.sign-in {
-      background: #0066cc;
-    }
-    #login-form button.cancel {
-      background: #666;
-    }
-    #login-message {
-      margin-top: 10px;
-      color: #f00;
-      animation: fadeIn 0.5s ease;
     }
     #loading-screen {
       position: fixed;
@@ -180,115 +23,230 @@
       display: none;
       justify-content: center;
       align-items: center;
-      z-index: 30;
-      color: #fff;
+      z-index: 1000;
       font-size: 24px;
     }
     #loading-screen.active {
       display: flex;
     }
-    @keyframes slideIn {
-      from { transform: translateX(-50%) translateY(-30px); opacity: 0; }
-      to { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #boot-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    #boot-screen img {
+      width: 200px;
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
     }
-    .no-animations .xmb-item, .no-animations .submenu, .no-animations .submenu-item,
-    .no-animations #login-form input, .no-animations #login-form select,
-    .no-animations #login-form button, .no-animations #background {
-      transition: none !important;
-      animation: none !important;
+    #background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      background: linear-gradient(135deg, #1a1a1a, #4a4a4a, #1a1a1a);
+    }
+    #background.theme-blue {
+      background: linear-gradient(135deg, #1a1a3a, #4a4a8a, #1a1a3a);
+    }
+    #background.theme-red {
+      background: linear-gradient(135deg, #3a1a1a, #8a4a4a, #3a1a1a);
+    }
+    .xmb-container {
+      position: relative;
+      height: 100vh;
+    }
+    .xmb-menu {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      position: absolute;
+      top: 20%;
+    }
+    .xmb-item {
+      text-align: center;
+      cursor: pointer;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    .xmb-item.active {
+      background: rgba(255, 255, 255, 0.4);
+      outline: 3px solid #fff;
+    }
+    .xmb-item img {
+      width: 64px;
+      height: 64px;
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+    }
+    .submenu {
+      display: none;
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+    }
+    .submenu.active {
+      display: block;
+    }
+    .submenu-item {
+      padding: 12px;
+      margin: 5px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .submenu-item:hover, .submenu-item:focus {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    #game-canvas {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10;
+    }
+    #game-canvas.active {
+      display: block;
+    }
+    #login-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+    }
+    #login-screen.active {
+      display: flex;
+    }
+    #login-form {
+      background: rgba(0, 0, 0, 0.9);
+      padding: 40px;
+      border-radius: 15px;
+      width: 400px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+    #login-form input, #login-form select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #666;
+      border-radius: 5px;
+      background: #222;
+      color: #fff;
+      font-size: 16px;
+    }
+    #login-form button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background: #0066cc;
+      color: #fff;
+      font-size: 16px;
+    }
+    #login-form button.cancel {
+      background: #666;
+    }
+    #login-message {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #f00;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
   <div id="loading-screen" role="alert" aria-label="Loading">Loading...</div>
-  <div id="boot-screen" role="alert" aria-label="Loading screen">
-    <img src="https://via.placeholder.com/200?text=PS3+Pro+Site+Logo" alt="PS3 Pro Site Logo">
+  <div id="boot-screen" role="alert" aria-label="Boot screen">
+    <img src="/images/ps3-pro-logo.png" alt="PS3 Pro Logo">
   </div>
   <div id="background"></div>
-  <div class="relative h-screen" id="xmb-container" role="navigation" aria-label="Main menu">
-    <h1 class="absolute top-4 left-4 text-2xl font-bold text-white">PS3 Pro Site</h1>
-    <h2 id="user-welcome" class="absolute top-4 right-4 text-lg text-white" aria-live="polite"></h2>
-    <div class="flex justify-around w-full absolute top-[20%] xmb-menu" role="menubar">
-      <div class="text-center cursor-pointer xmb-item active" data-menu="users" role="menuitem" aria-haspopup="true" tabindex="0">
-        <img src="https://via.placeholder.com/64?text=Users" alt="Users">
+  <div class="xmb-container" id="xmb-container" role="navigation" aria-label="Main menu">
+    <h1 class="absolute top-4 left-4 text-2xl font-bold">PS3 Pro Site</h1>
+    <h2 id="user-welcome" class="absolute top-4 right-4 text-lg" aria-live="polite"></h2>
+    <div class="xmb-menu" role="menubar">
+      <div class="xmb-item active" data-menu="users" role="menuitem" tabindex="0">
+        <img src="/images/users.png" alt="Users">
         <p>Users</p>
       </div>
-      <div class="text-center cursor-pointer xmb-item" data-menu="settings" role="menuitem" aria-haspopup="true" tabindex="-1">
-        <img src="https://via.placeholder.com/64?text=Settings" alt="Settings">
+      <div class="xmb-item" data-menu="settings" role="menuitem" tabindex="-1">
+        <img src="/images/settings.png" alt="Settings">
         <p>Settings</p>
       </div>
-      <div class="text-center cursor-pointer xmb-item" data-menu="games" role="menuitem" aria-haspopup="true" tabindex="-1">
-        <img src="https://via.placeholder.com/64?text=Games" alt="Games">
+      <div class="xmb-item" data-menu="games" role="menuitem" tabindex="-1">
+        <img src="/images/games.png" alt="Games">
         <p>Games</p>
       </div>
-      <div class="text-center cursor-pointer xmb-item" data-menu="media" role="menuitem" aria-haspopup="true" tabindex="-1">
-        <img src="https://via.placeholder.com/64?text=Media" alt="Media">
-        <p>Media</p>
-      </div>
-      <div class="text-center cursor-pointer xmb-item" data-menu="network" role="menuitem" aria-haspopup="true" tabindex="-1">
-        <img src="https://via.placeholder.com/64?text=Network" alt="Network">
-        <p>Network</p>
-      </div>
     </div>
-    <div class="absolute top-[30%] left-1/2 -translate-x-1/2 submenu active block" id="users-submenu" role="menu" aria-label="Users submenu">
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-action="login" role="menuitem" tabindex="0">Sign In</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-action="signout" role="menuitem" tabindex="0">Sign Out</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" id="user-profile" role="menuitem" tabindex="0"></div>
+    <div class="submenu active" id="users-submenu" role="menu" aria-label="Users submenu">
+      <div class="submenu-item" data-action="login" role="menuitem" tabindex="0">Sign In</div>
+      <div class="submenu-item" data-action="signout" role="menuitem" tabindex="0">Sign Out</div>
+      <div class="submenu-item" id="user-profile" role="menuitem" tabindex="0">Guest</div>
     </div>
-    <div class="absolute top-[30%] left-1/2 -translate-x-1/2 submenu" id="settings-submenu" role="menu" aria-label="Settings submenu">
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-theme="default" role="menuitem" tabindex="0">Theme: Default</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-theme="blue" role="menuitem" tabindex="0">Theme: Blue</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-theme="red" role="menuitem" tabindex="0">Theme: Red</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-setting="animations" role="menuitem" tabindex="0">Animations: On</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-setting="fastMode" role="menuitem" tabindex="0">Fast Mode: Off</div>
+    <div class="submenu" id="settings-submenu" role="menu" aria-label="Settings submenu">
+      <div class="submenu-item" data-theme="default" role="menuitem" tabindex="0">Theme: Default</div>
+      <div class="submenu-item" data-theme="blue" role="menuitem" tabindex="0">Theme: Blue</div>
+      <div class="submenu-item" data-theme="red" role="menuitem" tabindex="0">Theme: Red</div>
+      <div class="submenu-item" data-setting="fastMode" role="menuitem" tabindex="0">Fast Mode: Off</div>
     </div>
-    <div class="absolute top-[30%] left-1/2 -translate-x-1/2 submenu" id="games-submenu" role="menu" aria-label="Games submenu">
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-game="snake" role="menuitem" tabindex="0">Play Snake</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" data-game="platformer" role="menuitem" tabindex="0">Play Platformer</div>
+    <div class="submenu" id="games-submenu" role="menu" aria-label="Games submenu">
+      <div class="submenu-item" data-game="snake" role="menuitem" tabindex="0">Play Snake</div>
+      <div class="submenu-item" data-game="platformer" role="menuitem" tabindex="0">Play Platformer</div>
     </div>
-    <div class="absolute top-[30%] left-1/2 -translate-x-1/2 submenu" id="media-submenu" role="menu" aria-label="Media submenu">
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" role="menuitem" tabindex="0">Music</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" role="menuitem" tabindex="0">Videos</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" role="menuitem" tabindex="0">Photos</div>
-    </div>
-    <div class="absolute top-[30%] left-1/2 -translate-x-1/2 submenu" id="network-submenu" role="menu" aria-label="Network submenu">
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" role="menuitem" tabindex="0">Internet Browser</div>
-      <div class="p-2.5 m-1.25 cursor-pointer submenu-item" role="menuitem" tabindex="0">PlayStation Store</div>
-    </div>
-    <canvas id="game-canvas" width="800" height="600" role="img" aria-label="Game canvas"></canvas>
+    <canvas id="game-canvas" role="img" aria-label="Game canvas"></canvas>
     <div id="login-screen" role="dialog" aria-label="Sign in form">
       <div id="login-form">
-        <h2 class="text-xl font-bold mb-4">Sign In to PS3 Pro Site</h2>
-        <input type="text" id="username" placeholder="Email or PSN ID" class="mb-4" aria-label="Email or PSN ID">
-        <input type="password" id="password" placeholder="Password" class="mb-4" aria-label="Password">
-        <select id="provider" class="mb-4" aria-label="Authentication provider">
+        <h2 class="text-xl font-bold mb-4">Sign In</h2>
+        <input type="text" id="username" placeholder="Email or PSN ID" aria-label="Email or PSN ID">
+        <input type="password" id="password" placeholder="Password" aria-label="Password">
+        <select id="provider" aria-label="Authentication provider">
           <option value="psn">PSN</option>
           <option value="gmail">Google</option>
           <option value="hotmail">Hotmail</option>
         </select>
         <div class="flex justify-center gap-2">
-          <button class="sign-in text-white" onclick="signIn()">Sign In</button>
-          <button class="cancel text-white" onclick="cancelSignIn()">Cancel</button>
+          <button class="sign-in" onclick="signIn()">Sign In</button>
+          <button class="cancel" onclick="cancelSignIn()">Cancel</button>
         </div>
         <p id="login-message" aria-live="assertive"></p>
       </div>
     </div>
   </div>
   <script>
-    // Constants
-    const API_URL = 'https://ps3pro-com.onrender.com'; // Updated for Render deployment
+    const API_URL = 'https://ps3pro-com.onrender.com';
     let token = null;
-    let user = null;
-    let snakeHighScore = 0;
-    let platformerHighScore = 0;
-    let isProcessingKey = false; // Prevent rapid keypresses
-    const DEBOUNCE_MS = 200; // Increased debounce for smoother navigation
+    let user = JSON.parse(localStorage.getItem('user')) || null;
+    let snakeHighScore = Number(localStorage.getItem('snakeHighScore')) || 0;
+    let platformerHighScore = Number(localStorage.getItem('platformerHighScore')) || 0;
+    let isProcessing = false;
+    const DEBOUNCE_MS = 300;
 
-    // DOM Elements
     const userWelcome = document.getElementById('user-welcome');
     const userProfile = document.getElementById('user-profile');
     const background = document.getElementById('background');
@@ -296,28 +254,31 @@
     const loginScreen = document.getElementById('login-screen');
     const loadingScreen = document.getElementById('loading-screen');
     const gameCanvas = document.getElementById('game-canvas');
+    let gl = null;
+    let ctx = gameCanvas.getContext('2d');
 
-    // Utility function to sanitize input
     function sanitizeInput(input) {
-      const div = document.createElement('div');
-      div.textContent = input;
-      return div.innerHTML;
+      return input.replace(/[<>&"']/g, '');
     }
 
-    // Debounce utility
     function debounce(func, wait) {
       let timeout;
-      return function (...args) {
+      return (...args) => {
         clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
+        timeout = setTimeout(() => {
+          try {
+            func(...args);
+          } catch (e) {
+            console.error('Debounced function error:', e.message);
+          }
+        }, wait);
       };
     }
 
-    // API Helper with caching
-    const responseCache = new Map();
-    async function apiRequest(endpoint, method = 'GET', body = null, auth = true) {
+    async function apiRequest(endpoint, method = 'GET', body = null, auth = true, retries = 8, delay = 2000) {
       const cacheKey = `${method}:${endpoint}:${JSON.stringify(body)}`;
       if (responseCache.has(cacheKey)) {
+        console.log(`Cache hit: ${cacheKey}`);
         return responseCache.get(cacheKey);
       }
       loadingScreen.classList.add('active');
@@ -327,48 +288,52 @@
         const response = await fetch(`${API_URL}${endpoint}`, {
           method,
           headers,
-          body: body ? JSON.stringify(body) : null
+          body: body ? JSON.stringify(body) : null,
+          signal: AbortSignal.timeout(30000)
         });
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
         const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || `HTTP error: ${response.status}`);
+        }
         responseCache.set(cacheKey, data);
         return data;
       } catch (e) {
-        console.error(`API request failed: ${endpoint}`, e);
-        throw new Error('Failed to connect to the server. Please try again later.');
+        if (retries > 1 && (e.message.includes('timeout') || e.message.includes('503') || e.message.includes('network'))) {
+          console.log(`Retry ${9 - retries} for ${endpoint}: ${e.message}`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return apiRequest(endpoint, method, body, auth, retries - 1, delay * 1.5);
+        }
+        throw new Error(`Failed to connect to server: ${e.message}. Check server logs or try guest mode.`);
       } finally {
         loadingScreen.classList.remove('active');
       }
     }
 
-    // User Management
+    const responseCache = new Map();
+
     async function loadUserData() {
-      if (token) {
-        try {
-          loadingScreen.classList.add('active');
+      try {
+        if (token) {
           const userData = await apiRequest('/user');
           const savedData = await apiRequest('/load');
           user = {
             username: userData.username,
             provider: userData.provider,
             theme: savedData.theme || 'default',
-            animations: savedData.animations !== undefined ? savedData.animations : true,
             fastMode: savedData.fastMode || false
           };
           snakeHighScore = savedData.snakeHighScore || 0;
           platformerHighScore = savedData.platformerHighScore || 0;
-          updateUserUI();
-        } catch (e) {
-          console.error('Failed to load user data:', e);
-          token = null;
-          user = null;
-          updateUserUI();
-        } finally {
-          loadingScreen.classList.remove('active');
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('snakeHighScore', snakeHighScore);
+          localStorage.setItem('platformerHighScore', platformerHighScore);
         }
+      } catch (e) {
+        console.log(`Load user data failed: ${e.message}, using guest mode`);
+        token = null;
+        user = null;
       }
+      updateUserUI();
     }
 
     async function saveUserData() {
@@ -376,126 +341,134 @@
         try {
           await apiRequest('/save', 'POST', {
             theme: user.theme,
-            animations: user.animations,
             fastMode: user.fastMode,
             snakeHighScore,
             platformerHighScore
           });
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('snakeHighScore', snakeHighScore);
+          localStorage.setItem('platformerHighScore', platformerHighScore);
         } catch (e) {
-          console.error('Failed to save user data:', e);
+          console.log(`Save failed: ${e.message}`);
         }
       }
     }
 
     function updateUserUI() {
-      if (user) {
-        userWelcome.textContent = `Welcome, ${sanitizeInput(user.username)}`;
-        userProfile.textContent = `${sanitizeInput(user.username)}'s Profile`;
-        background.className = `theme-${user.theme || 'default'}`;
-        document.body.classList.toggle('no-animations', !user.animations);
-        document.querySelector('[data-setting="animations"]').textContent = `Animations: ${user.animations ? 'On' : 'Off'}`;
-        document.querySelector('[data-setting="fastMode"]').textContent = `Fast Mode: ${user.fastMode ? 'On' : 'Off'}`;
-      } else {
-        userWelcome.textContent = '';
-        userProfile.textContent = 'Guest';
-        background.className = 'theme-default';
-        document.body.classList.remove('no-animations');
-        document.querySelector('[data-setting="animations"]').textContent = `Animations: On`;
-        document.querySelector('[data-setting="fastMode"]').textContent = `Fast Mode: Off`;
+      try {
+        userWelcome.textContent = user ? `Welcome, ${sanitizeInput(user.username)}` : '';
+        userProfile.textContent = user ? `${sanitizeInput(user.username)}'s Profile` : 'Guest';
+        background.className = user ? `theme-${user.theme}` : 'theme-default';
+        document.querySelector('[data-setting="fastMode"]').textContent = user ? `Fast Mode: ${user.fastMode ? 'On' : 'Off'}` : 'Fast Mode: Off';
+      } catch (e) {
+        console.error('UI update error:', e.message);
       }
     }
 
     window.signIn = async () => {
+      if (isProcessing) return;
+      isProcessing = true;
       const username = sanitizeInput(document.getElementById('username').value.trim());
       const password = document.getElementById('password').value;
       const provider = document.getElementById('provider').value;
       const message = document.getElementById('login-message');
-      if (!username || !password) {
-        message.textContent = 'Please enter both username and password';
-        message.style.color = '#f00';
-        return;
-      }
-      if (password.length < 6) {
-        message.textContent = 'Password must be at least 6 characters';
-        message.style.color = '#f00';
-        return;
-      }
       try {
-        const response = await apiRequest('/signin', 'POST', { username, password, provider }, false);
-        if (response.token) {
-          token = response.token;
-          await loadUserData();
-          message.textContent = `Signed in with ${provider} as ${sanitizeInput(username)}`;
-          message.style.color = '#0f0';
-          setTimeout(() => {
-            loginScreen.classList.remove('active');
-            xmbContainer.classList.remove('hidden');
-            document.querySelector('.xmb-item[data-menu="users"]').focus();
-          }, 1000);
-        } else {
-          message.textContent = response.error || 'Sign-in failed';
-          message.style.color = '#f00';
+        if (!username || !password) {
+          throw new Error('Enter username and password');
         }
+        if (password.length < 6) {
+          throw new Error('Password must be 6+ characters');
+        }
+        const response = await apiRequest('/signin', 'POST', { username, password, provider }, false);
+        token = response.token;
+        await loadUserData();
+        message.textContent = `Signed in as ${sanitizeInput(username)}`;
+        message.style.color = '#0f0';
+        setTimeout(() => {
+          loginScreen.classList.remove('active');
+          xmbContainer.classList.remove('hidden');
+          document.querySelector('.xmb-item[data-menu="users"]').focus();
+          isProcessing = false;
+        }, 1000);
       } catch (e) {
-        message.textContent = e.message || 'Error connecting to server';
+        console.error(`Sign-in error: ${e.message}`);
+        message.textContent = e.message.includes('Failed to connect') 
+          ? 'Failed to connect to server. Try again or use guest mode.'
+          : e.message;
         message.style.color = '#f00';
+        isProcessing = false;
       }
     };
 
     window.cancelSignIn = () => {
-      loginScreen.classList.remove('active');
-      xmbContainer.classList.remove('hidden');
-      document.querySelector('.xmb-item[data-menu="users"]').focus();
+      if (isProcessing) return;
+      isProcessing = true;
+      try {
+        loginScreen.classList.remove('active');
+        xmbContainer.classList.remove('hidden');
+        document.querySelector('.xmb-item[data-menu="users"]').focus();
+      } catch (e) {
+        console.error('Cancel sign-in error:', e.message);
+      }
+      isProcessing = false;
     };
 
-    // XMB Navigation
     const items = document.querySelectorAll('.xmb-item');
     const submenus = document.querySelectorAll('.submenu');
     let currentGame = null;
 
     const navigateXMB = debounce((direction) => {
-      if (isProcessingKey) return;
-      isProcessingKey = true;
-      const activeItem = document.querySelector('.xmb-item.active');
-      const currentIndex = Array.from(items).indexOf(activeItem);
-      let newIndex = direction === 'right' ? (currentIndex + 1) % items.length : (currentIndex - 1 + items.length) % items.length;
-
-      items.forEach(i => {
-        i.classList.remove('active');
-        i.setAttribute('tabindex', '-1');
-      });
-      items[newIndex].classList.add('active');
-      items[newIndex].setAttribute('tabindex', '0');
-      items[newIndex].focus();
-      submenus.forEach(sm => sm.classList.remove('active', 'block'));
-      const menuId = items[newIndex].dataset.menu + '-submenu';
-      const submenu = document.getElementById(menuId);
-      submenu.classList.add('active', 'block');
-      submenu.querySelector('.submenu-item').focus();
-      gameCanvas.classList.remove('active');
-      loginScreen.classList.remove('active');
-      if (currentGame) currentGame.stop();
-      setTimeout(() => isProcessingKey = false, DEBOUNCE_MS);
-    }, DEBOUNCE_MS);
-
-    items.forEach((item, index) => {
-      item.addEventListener('click', () => {
+      if (isProcessing) return;
+      isProcessing = true;
+      try {
+        const activeItem = document.querySelector('.xmb-item.active');
+        const currentIndex = Array.from(items).indexOf(activeItem);
+        const newIndex = direction === 'right' ? (currentIndex + 1) % items.length : (currentIndex - 1 + items.length) % items.length;
         items.forEach(i => {
           i.classList.remove('active');
           i.setAttribute('tabindex', '-1');
         });
-        item.classList.add('active');
-        item.setAttribute('tabindex', '0');
-        submenus.forEach(sm => sm.classList.remove('active', 'block'));
-        const menuId = item.dataset.menu + '-submenu';
-        const submenu = document.getElementById(menuId);
-        submenu.classList.add('active', 'block');
-        submenu.querySelector('.submenu-item').focus();
+        items[newIndex].classList.add('active');
+        items[newIndex].setAttribute('tabindex', '0');
+        items[newIndex].focus();
+        submenus.forEach(sm => sm.classList.remove('active'));
+        const menuId = items[newIndex].dataset.menu + '-submenu';
+        document.getElementById(menuId).classList.add('active');
+        document.getElementById(menuId).querySelector('.submenu-item').focus();
         gameCanvas.classList.remove('active');
         loginScreen.classList.remove('active');
         if (currentGame) currentGame.stop();
+      } catch (e) {
+        console.error('XMB navigation error:', e.message);
+      }
+      isProcessing = false;
+    }, DEBOUNCE_MS);
+
+    items.forEach(item => {
+      item.addEventListener('click', () => {
+        if (isProcessing) return;
+        isProcessing = true;
+        try {
+          items.forEach(i => {
+            i.classList.remove('active');
+            i.setAttribute('tabindex', '-1');
+          });
+          item.classList.add('active');
+          item.setAttribute('tabindex', '0');
+          submenus.forEach(sm => sm.classList.remove('active'));
+          const menuId = item.dataset.menu + '-submenu';
+          document.getElementById(menuId).classList.add('active');
+          document.getElementById(menuId).querySelector('.submenu-item').focus();
+          gameCanvas.classList.remove('active');
+          loginScreen.classList.remove('active');
+          if (currentGame) currentGame.stop();
+        } catch (e) {
+          console.error('XMB item click error:', e.message);
+        }
+        isProcessing = false;
       });
-      item.addEventListener('keydown', (e) => {
+      item.addEventListener('keydown', e => {
+        if (isProcessing) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           item.click();
@@ -503,52 +476,45 @@
       });
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (loginScreen.classList.contains('active') && e.key === 'Escape') {
-        cancelSignIn();
-        return;
-      }
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        navigateXMB('right');
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        navigateXMB('left');
+    document.addEventListener('keydown', e => {
+      if (isProcessing) return;
+      try {
+        if (loginScreen.classList.contains('active') && e.key === 'Escape') {
+          cancelSignIn();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          navigateXMB('right');
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          navigateXMB('left');
+        }
+      } catch (e) {
+        console.error('Keydown error:', e.message);
       }
     });
 
-    // WebGL Setup
-    let gl = null;
-    let ctx = gameCanvas.getContext('2d');
-    let program, positionLocation, resolutionLocation, colorLocation, timeLocation;
-    let bufferCache = new Map();
-
-    const initWebGL = () => {
+    function initWebGL() {
       try {
         gl = gameCanvas.getContext('webgl') || gameCanvas.getContext('experimental-webgl');
         if (!gl) {
-          console.warn('WebGL initialization failed, using Canvas 2D');
+          console.log('WebGL unavailable, using 2D canvas');
           return false;
         }
         const vertexShaderSource = `
           attribute vec2 a_position;
           uniform vec2 u_resolution;
-          uniform float u_time;
           void main() {
             vec2 zeroToOne = a_position / u_resolution;
             vec2 zeroToTwo = zeroToOne * 2.0;
             vec2 clipSpace = zeroToTwo - 1.0;
-            float pulse = 0.95 + 0.05 * sin(u_time * 0.005); /* Smoother pulse */
-            gl_Position = vec4(clipSpace * vec2(1, -1) * pulse, 0, 1);
+            gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
           }
         `;
         const fragmentShaderSource = `
           precision mediump float;
           uniform vec4 u_color;
-          uniform float u_time;
           void main() {
-            float glow = 0.8 + 0.1 * sin(u_time * 0.005); /* Smoother glow */
-            gl_FragColor = vec4(u_color.rgb * glow, u_color.a);
+            gl_FragColor = u_color;
           }
         `;
         const createShader = (type, source) => {
@@ -568,7 +534,7 @@
           gl = null;
           return false;
         }
-        program = gl.createProgram();
+        const program = gl.createProgram();
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program);
@@ -579,29 +545,23 @@
           return false;
         }
         gl.useProgram(program);
-        positionLocation = gl.getAttribLocation(program, 'a_position');
-        resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
-        colorLocation = gl.getUniformLocation(program, 'u_color');
-        timeLocation = gl.getUniformLocation(program, 'u_time');
-        gl.uniform2f(resolutionLocation, 800, 600);
+        gl.program = program;
         return true;
       } catch (e) {
-        console.error('WebGL initialization error:', e);
+        console.error('WebGL init failed:', e.message);
         gl = null;
         return false;
       }
-    };
+    }
 
-    function drawRect(x, y, width, height, color, time) {
-      if (!gl) {
-        ctx.fillStyle = `rgb(${color[0]*255}, ${color[1]*255}, ${color[2]*255})`;
-        ctx.fillRect(x, y, width, height);
-        return;
-      }
-      const cacheKey = `${x}:${y}:${width}:${height}`;
-      let buffer = bufferCache.get(cacheKey);
-      if (!buffer) {
-        buffer = gl.createBuffer();
+    function drawRect(x, y, width, height, color) {
+      try {
+        if (!gl) {
+          ctx.fillStyle = `rgb(${color[0]*255}, ${color[1]*255}, ${color[2]*255})`;
+          ctx.fillRect(x, y, width, height);
+          return;
+        }
+        const buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
           x, y,
@@ -611,344 +571,328 @@
           x + width, y + height,
           x, y + height
         ]), gl.STATIC_DRAW);
-        bufferCache.set(cacheKey, buffer);
+        const positionLocation = gl.getAttribLocation(gl.program, 'a_position');
+        const resolutionLocation = gl.getUniformLocation(gl.program, 'u_resolution');
+        const colorLocation = gl.getUniformLocation(gl.program, 'u_color');
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        gl.uniform2f(resolutionLocation, gameCanvas.width, gameCanvas.height);
+        gl.uniform4f(colorLocation, color[0], color[1], color[2], 1);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        gl.deleteBuffer(buffer);
+      } catch (e) {
+        console.error('Draw rect error:', e.message);
       }
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.enableVertexAttribArray(positionLocation);
-      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-      gl.uniform4f(colorLocation, color[0], color[1], color[2], 1);
-      gl.uniform1f(timeLocation, time);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
-    // Game Logic
-    const gameSettings = {
-      snake: {
-        speed: user && user.fastMode ? 20 : 15,
-        particles: user && user.fastMode ? 5 : 10, /* Reduced particles */
-        fps: 60 /* Capped FPS */
-      },
-      platformer: {
-        jumpHeight: user && user.fastMode ? 20 : 15,
-        speed: user && user.fastMode ? 7 : 5,
-        fps: 60 /* Capped FPS */
+    function resizeCanvas() {
+      try {
+        gameCanvas.width = window.innerWidth;
+        gameCanvas.height = window.innerHeight;
+        if (gl) {
+          gl.viewport(0, 0, gameCanvas.width, gameCanvas.height);
+        }
+      } catch (e) {
+        console.error('Resize canvas error:', e.message);
       }
-    };
+    }
 
     class SnakeGame {
-      constructor(multiplayer = false) {
+      constructor() {
         this.gridSize = 20;
-        this.tileCount = 800 / this.gridSize;
+        this.tileCount = Math.floor(window.innerWidth / this.gridSize);
         this.snake = [{ x: 10, y: 10 }];
         this.food = { x: 15, y: 15 };
         this.dx = 0;
         this.dy = 0;
         this.score = 0;
-        this.particles = [];
         this.running = false;
-        this.multiplayer = multiplayer;
-        this.otherSnakes = multiplayer ? (JSON.parse(localStorage.getItem('snakeMultiplayer')) || []) : [];
-        this.lastUpdate = 0;
         this.lastFrame = 0;
       }
       start() {
-        this.running = true;
-        gameCanvas.classList.add('active');
-        xmbContainer.classList.add('hidden');
-        initWebGL();
-        document.removeEventListener('keydown', this.handleInput);
-        document.addEventListener('keydown', this.handleInput.bind(this));
-        this.gameLoop(performance.now());
+        try {
+          this.running = true;
+          gameCanvas.classList.add('active');
+          xmbContainer.classList.add('hidden');
+          resizeCanvas();
+          if (initWebGL()) {
+            gl.clearColor(0, 0, 0, 1);
+          }
+          document.addEventListener('keydown', this.handleInput.bind(this));
+          this.gameLoop(performance.now());
+        } catch (e) {
+          console.error('Snake game start error:', e.message);
+          this.stop();
+        }
       }
       stop() {
-        this.running = false;
-        gameCanvas.classList.remove('active');
-        xmbContainer.classList.remove('hidden');
-        document.removeEventListener('keydown', this.handleInput);
-        if (this.score > snakeHighScore) {
-          snakeHighScore = this.score;
-          saveUserData();
+        try {
+          this.running = false;
+          gameCanvas.classList.remove('active');
+          xmbContainer.classList.remove('hidden');
+          document.removeEventListener('keydown', this.handleInput);
+          if (this.score > snakeHighScore) {
+            snakeHighScore = this.score;
+            saveUserData();
+          }
+          document.querySelector('.xmb-item[data-menu="games"]').focus();
+        } catch (e) {
+          console.error('Snake game stop error:', e.message);
         }
-        if (this.multiplayer && user) {
-          localStorage.setItem('snakeMultiplayer', JSON.stringify(this.otherSnakes.slice(0, 5)));
-        }
-        document.querySelector('.xmb-item[data-menu="games"]').focus();
       }
-      handleInput = debounce((e) => {
-        if (e.key === 'ArrowUp' && this.dy === 0) { this.dx = 0; this.dy = -1; }
-        else if (e.key === 'ArrowDown' && this.dy === 0) { this.dx = 0; this.dy = 1; }
-        else if (e.key === 'ArrowLeft' && this.dx === 0) { this.dx = -1; this.dy = 0; }
-        else if (e.key === 'ArrowRight' && this.dx === 0) { this.dx = 1; this.dy = 0; }
-        else if (e.key === 'Escape') this.stop();
+      handleInput = debounce(e => {
+        try {
+          if (e.key === 'ArrowUp' && this.dy === 0) { this.dx = 0; this.dy = -1; }
+          else if (e.key === 'ArrowDown' && this.dy === 0) { this.dx = 0; this.dy = 1; }
+          else if (e.key === 'ArrowLeft' && this.dx === 0) { this.dx = -1; this.dy = 0; }
+          else if (e.key === 'ArrowRight' && this.dx === 0) { this.dx = 1; this.dy = 0; }
+          else if (e.key === 'Escape') this.stop();
+        } catch (e) {
+          console.error('Snake input error:', e.message);
+        }
       }, DEBOUNCE_MS);
-      update(time) {
-        if (!this.running) return;
-        const delta = time - this.lastUpdate;
-        if (delta < 1000 / gameSettings.snake.speed) return;
-        this.lastUpdate = time;
-        const head = { x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy };
-        if (head.x < 0 || head.x >= this.tileCount || head.y < 0 || head.y >= this.tileCount || this.snake.some(s => s.x === head.x && s.y === head.y)) {
-          this.stop();
-          return;
-        }
-        this.snake.unshift(head);
-        if (head.x === this.food.x && head.y === this.food.y) {
-          this.score += 10;
-          this.food = { x: Math.floor(Math.random() * this.tileCount), y: Math.floor(Math.random() * this.tileCount) };
-          for (let i = 0; i < gameSettings.snake.particles; i++) {
-            this.particles.push({ x: head.x * this.gridSize, y: head.y * this.gridSize, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, life: 30 });
+      update() {
+        try {
+          const head = { x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy };
+          if (head.x < 0 || head.x >= this.tileCount || head.y < 0 || head.y >= Math.floor(window.innerHeight / this.gridSize) || 
+              this.snake.some(s => s.x === head.x && s.y === head.y)) {
+            this.stop();
+            return;
           }
-        } else {
-          this.snake.pop();
-        }
-        this.particles = this.particles.map(p => ({ ...p, x: p.x + p.vx, y: p.y + p.vy, life: p.life - 1 })).filter(p => p.life > 0);
-        if (this.multiplayer) {
-          this.otherSnakes = this.otherSnakes.map(s => ({
-            ...s,
-            x: Math.max(0, Math.min(this.tileCount - 1, s.x + (Math.random() > 0.5 ? 1 : -1))),
-            y: Math.max(0, Math.min(this.tileCount - 1, s.y + (Math.random() > 0.5 ? 1 : -1)))
-          }));
+          this.snake.unshift(head);
+          if (head.x === this.food.x && head.y === this.food.y) {
+            this.score += 10;
+            this.food = { x: Math.floor(Math.random() * this.tileCount), y: Math.floor(Math.random() * Math.floor(window.innerHeight / this.gridSize)) };
+          } else {
+            this.snake.pop();
+          }
+        } catch (e) {
+          console.error('Snake update error:', e.message);
         }
       }
-      draw(time) {
-        if (gl) {
-          gl.clear(gl.COLOR_BUFFER_BIT);
-          drawRect(0, 0, 800, 600, [0, 0, 0, 1], time);
-          this.snake.forEach(s => drawRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2, [0, 1, 0, 1], time));
-          drawRect(this.food.x * this.gridSize, this.food.y * this.gridSize, this.gridSize - 2, this.gridSize - 2, [1, 0, 0, 1], time);
-          if (this.multiplayer) {
-            this.otherSnakes.forEach(s => drawRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2, [0, 0, 1, 1], time));
+      draw() {
+        try {
+          if (gl) {
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            this.snake.forEach(s => drawRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2, [0, 1, 0]));
+            drawRect(this.food.x * this.gridSize, this.food.y * this.gridSize, this.gridSize - 2, this.gridSize - 2, [1, 0, 0]);
+          } else {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            ctx.fillStyle = '#0f0';
+            this.snake.forEach(s => ctx.fillRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2));
+            ctx.fillStyle = '#f00';
+            ctx.fillRect(this.food.x * this.gridSize, this.food.y * this.gridSize, this.gridSize - 2, this.gridSize - 2);
           }
-          this.particles.forEach(p => drawRect(p.x, p.y, 4, 4, [1, 1, 1, 1], time));
-        } else {
-          ctx.fillStyle = '#000';
-          ctx.fillRect(0, 0, 800, 600);
-          ctx.fillStyle = '#0f0';
-          this.snake.forEach(s => ctx.fillRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2));
-          ctx.fillStyle = '#f00';
-          ctx.beginPath();
-          ctx.arc((this.food.x + 0.5) * this.gridSize, (this.food.y + 0.5) * this.gridSize, (this.gridSize - 2) / 2, 0, Math.PI * 2);
-          ctx.fill();
-          if (this.multiplayer) {
-            ctx.fillStyle = '#00f';
-            this.otherSnakes.forEach(s => ctx.fillRect(s.x * this.gridSize, s.y * this.gridSize, this.gridSize - 2, this.gridSize - 2));
-          }
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-          this.particles.forEach(p => ctx.fillRect(p.x, p.y, 4, 4));
           ctx.fillStyle = '#fff';
           ctx.font = '20px Arial';
           ctx.fillText(`Score: ${this.score} | High: ${snakeHighScore}`, 10, 20);
+        } catch (e) {
+          console.error('Snake draw error:', e.message);
         }
       }
       gameLoop(time) {
         if (!this.running) return;
-        if (time - this.lastFrame < 1000 / gameSettings.snake.fps) {
+        try {
+          if (time - this.lastFrame < 1000 / 30) {
+            requestAnimationFrame(this.gameLoop.bind(this));
+            return;
+          }
+          this.lastFrame = time;
+          this.update();
+          this.draw();
           requestAnimationFrame(this.gameLoop.bind(this));
-          return;
+        } catch (e) {
+          console.error('Snake game loop error:', e.message);
+          this.stop();
         }
-        this.lastFrame = time;
-        this.update(time);
-        this.draw(time);
-        requestAnimationFrame(this.gameLoop.bind(this));
       }
     }
 
     class PlatformerGame {
-      constructor(multiplayer = false) {
-        this.player = { x: 50, y: 500, vx: 0, vy: 0, width: 20, height: 40 };
+      constructor() {
+        this.player = { x: 50, y: window.innerHeight - 100, vx: 0, vy: 0, width: 20, height: 40 };
         this.platforms = [
-          { x: 0, y: 550, width: 800, height: 50 },
-          { x: 200, y: 400, width: 100, height: 20 },
-          { x: 400, y: 300, width: 100, height: 20 }
+          { x: 0, y: window.innerHeight - 50, width: window.innerWidth, height: 50 },
+          { x: 200, y: window.innerHeight - 200, width: 100, height: 20 },
+          { x: 400, y: window.innerHeight - 300, width: 100, height: 20 }
         ];
         this.score = 0;
         this.running = false;
-        this.multiplayer = multiplayer;
-        this.otherPlayer = multiplayer ? (JSON.parse(localStorage.getItem('platformerMultiplayer')) || { x: 100, y: 500, vx: 0, vy: 0, width: 20, height: 40 }) : null;
-        this.lastUpdate = 0;
         this.lastFrame = 0;
       }
       start() {
-        this.running = true;
-        gameCanvas.classList.add('active');
-        xmbContainer.classList.add('hidden');
-        initWebGL();
-        document.removeEventListener('keydown', this.handleInput);
-        document.removeEventListener('keyup', this.handleKeyUp);
-        document.addEventListener('keydown', this.handleInput.bind(this));
-        document.addEventListener('keyup', this.handleKeyUp.bind(this));
-        this.gameLoop(performance.now());
+        try {
+          this.running = true;
+          gameCanvas.classList.add('active');
+          xmbContainer.classList.add('hidden');
+          resizeCanvas();
+          if (initWebGL()) {
+            gl.clearColor(0, 0, 0, 1);
+          }
+          document.addEventListener('keydown', this.handleInput.bind(this));
+          document.addEventListener('keyup', this.handleKeyUp.bind(this));
+          this.gameLoop(performance.now());
+        } catch (e) {
+          console.error('Platformer start error:', e.message);
+          this.stop();
+        }
       }
       stop() {
-        this.running = false;
-        gameCanvas.classList.remove('active');
-        xmbContainer.classList.remove('hidden');
-        document.removeEventListener('keydown', this.handleInput);
-        document.removeEventListener('keyup', this.handleKeyUp);
-        if (this.score > platformerHighScore) {
-          platformerHighScore = this.score;
-          saveUserData();
+        try {
+          this.running = false;
+          gameCanvas.classList.remove('active');
+          xmbContainer.classList.remove('hidden');
+          document.removeEventListener('keydown', this.handleInput);
+          document.removeEventListener('keyup', this.handleKeyUp);
+          if (this.score > platformerHighScore) {
+            platformerHighScore = this.score;
+            saveUserData();
+          }
+          document.querySelector('.xmb-item[data-menu="games"]').focus();
+        } catch (e) {
+          console.error('Platformer stop error:', e.message);
         }
-        if (this.multiplayer && user && this.otherPlayer) {
-          localStorage.setItem('platformerMultiplayer', JSON.stringify(this.otherPlayer));
-        }
-        document.querySelector('.xmb-item[data-menu="games"]').focus();
       }
-      handleInput = debounce((e) => {
-        if (e.key === 'ArrowLeft') this.player.vx = -gameSettings.platformer.speed;
-        else if (e.key === 'ArrowRight') this.player.vx = gameSettings.platformer.speed;
-        else if (e.key === 'ArrowUp' && this.isOnGround()) this.player.vy = -gameSettings.platformer.jumpHeight;
-        else if (e.key === 'Escape') this.stop();
-      }, DEBOUNCE_MS);
-      handleKeyUp = debounce((e) => {
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') this.player.vx = 0;
-      }, DEBOUNCE_MS);
-      isOnGround(player = this.player) {
-        return this.platforms.some(p => 
-          player.y + player.height >= p.y &&
-          player.y + player.height <= p.y + p.height &&
-          player.x + player.width > p.x &&
-          player.x < p.x + p.width
-        );
-      }
-      update(time) {
-        if (!this.running) return;
-        const delta = time - this.lastUpdate;
-        if (delta < 1000 / gameSettings.platformer.fps) return;
-        this.lastUpdate = time;
-        this.player.x = Math.max(0, Math.min(800 - this.player.width, this.player.x + this.player.vx));
-        this.player.y += this.player.vy;
-        if (!this.isOnGround()) this.player.vy += 0.5;
-        else { this.player.vy = 0; this.score += 1; }
-        if (this.player.y + this.player.height > 600) {
-          this.player.y = 600 - this.player.height;
-          this.player.vy = 0;
+      handleInput = debounce(e => {
+        try {
+          const speed = user?.fastMode ? 7 : 5;
+          const jump = user?.fastMode ? 20 : 15;
+          if (e.key === 'ArrowLeft') this.player.vx = -speed;
+          else if (e.key === 'ArrowRight') this.player.vx = speed;
+          else if (e.key === 'ArrowUp' && this.isOnGround()) this.player.vy = -jump;
+          else if (e.key === 'Escape') this.stop();
+        } catch (e) {
+          console.error('Platformer input error:', e.message);
         }
-        this.platforms.forEach(p => {
-          if (this.player.vy > 0 && this.player.y + this.player.height <= p.y && this.player.y + this.player.height + this.player.vy > p.y &&
-              this.player.x + this.player.width > p.x && this.player.x < p.x + p.width) {
-            this.player.y = p.y - this.player.height;
+      }, DEBOUNCE_MS);
+      handleKeyUp = debounce(e => {
+        try {
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') this.player.vx = 0;
+        } catch (e) {
+          console.error('Platformer keyup error:', e.message);
+        }
+      }, DEBOUNCE_MS);
+      isOnGround() {
+        try {
+          return this.platforms.some(p => 
+            this.player.y + this.player.height >= p.y &&
+            this.player.y + this.player.height <= p.y + p.height &&
+            this.player.x + this.player.width > p.x &&
+            this.player.x < p.x + p.width
+          );
+        } catch (e) {
+          console.error('Platformer isOnGround error:', e.message);
+          return false;
+        }
+      }
+      update() {
+        try {
+          this.player.x = Math.max(0, Math.min(window.innerWidth - this.player.width, this.player.x + this.player.vx));
+          this.player.y += this.player.vy;
+          if (!this.isOnGround()) this.player.vy += 0.5;
+          else { this.player.vy = 0; this.score += 1; }
+          if (this.player.y + this.player.height > window.innerHeight) {
+            this.player.y = window.innerHeight - this.player.height;
             this.player.vy = 0;
           }
-        });
-        if (this.multiplayer && this.otherPlayer) {
-          this.otherPlayer.x = Math.max(0, Math.min(800 - this.otherPlayer.width, this.otherPlayer.x + this.otherPlayer.vx));
-          this.otherPlayer.y += this.otherPlayer.vy;
-          if (!this.isOnGround(this.otherPlayer)) this.otherPlayer.vy += 0.5;
-          else this.otherPlayer.vy = 0;
-          if (this.otherPlayer.y + this.otherPlayer.height > 600) {
-            this.otherPlayer.y = 600 - this.otherPlayer.height;
-            this.otherPlayer.vy = 0;
-          }
           this.platforms.forEach(p => {
-            if (this.otherPlayer.vy > 0 && this.otherPlayer.y + this.otherPlayer.height <= p.y && 
-                this.otherPlayer.y + this.otherPlayer.height + this.otherPlayer.vy > p.y &&
-                this.otherPlayer.x + this.otherPlayer.width > p.x && this.otherPlayer.x < p.x + p.width) {
-              this.otherPlayer.y = p.y - this.otherPlayer.height;
-              this.otherPlayer.vy = 0;
+            if (this.player.vy > 0 && this.player.y + this.player.height <= p.y && 
+                this.player.y + this.player.height + this.player.vy > p.y &&
+                this.player.x + this.player.width > p.x && this.player.x < p.x + p.width) {
+              this.player.y = p.y - this.player.height;
+              this.player.vy = 0;
             }
           });
-          this.otherPlayer.vx = (Math.random() - 0.5) * gameSettings.platformer.speed;
-          if (Math.random() > 0.95 && this.isOnGround(this.otherPlayer)) this.otherPlayer.vy = -gameSettings.platformer.jumpHeight;
+        } catch (e) {
+          console.error('Platformer update error:', e.message);
         }
       }
-      draw(time) {
-        if (gl) {
-          gl.clear(gl.COLOR_BUFFER_BIT);
-          drawRect(0, 0, 800, 600, [0, 0, 0, 1], time);
-          drawRect(this.player.x, this.player.y, this.player.width, this.player.height, [0, 0, 1, 1], time);
-          if (this.multiplayer && this.otherPlayer) {
-            drawRect(this.otherPlayer.x, this.otherPlayer.y, this.otherPlayer.width, this.otherPlayer.height, [1, 0, 0, 1], time);
+      draw() {
+        try {
+          if (gl) {
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            drawRect(this.player.x, this.player.y, this.player.width, this.player.height, [0, 0, 1]);
+            this.platforms.forEach(p => drawRect(p.x, p.y, p.width, p.height, [0.333, 0.333, 0.333]));
+          } else {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            ctx.fillStyle = '#00f';
+            ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+            ctx.fillStyle = '#555';
+            this.platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
           }
-          this.platforms.forEach(p => drawRect(p.x, p.y, p.width, p.height, [0.333, 0.333, 0.333, 1], time));
-        } else {
-          ctx.fillStyle = '#000';
-          ctx.fillRect(0, 0, 800, 600);
-          ctx.fillStyle = '#00f';
-          ctx.beginPath();
-          ctx.arc(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, this.player.width / 2, 0, Math.PI * 2);
-          ctx.fill();
-          if (this.multiplayer && this.otherPlayer) {
-            ctx.fillStyle = '#f00';
-            ctx.beginPath();
-            ctx.arc(this.otherPlayer.x + this.otherPlayer.width / 2, this.otherPlayer.y + this.otherPlayer.height / 2, this.otherPlayer.width / 2, 0, Math.PI * 2);
-            ctx.fill();
-          }
-          ctx.fillStyle = '#555';
-          this.platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
           ctx.fillStyle = '#fff';
           ctx.font = '20px Arial';
           ctx.fillText(`Score: ${this.score} | High: ${platformerHighScore}`, 10, 20);
+        } catch (e) {
+          console.error('Platformer draw error:', e.message);
         }
       }
       gameLoop(time) {
         if (!this.running) return;
-        if (time - this.lastFrame < 1000 / gameSettings.platformer.fps) {
+        try {
+          if (time - this.lastFrame < 1000 / 30) {
+            requestAnimationFrame(this.gameLoop.bind(this));
+            return;
+          }
+          this.lastFrame = time;
+          this.update();
+          this.draw();
           requestAnimationFrame(this.gameLoop.bind(this));
-          return;
+        } catch (e) {
+          console.error('Platformer game loop error:', e.message);
+          this.stop();
         }
-        this.lastFrame = time;
-        this.update(time);
-        this.draw(time);
-        requestAnimationFrame(this.gameLoop.bind(this));
       }
     }
 
-    // Event Listeners
     document.querySelector('.submenu-item[data-action="login"]').addEventListener('click', () => {
-      loginScreen.classList.add('active');
-      xmbContainer.classList.add('hidden');
-      if (currentGame) currentGame.stop();
-      document.getElementById('username').focus();
+      if (isProcessing) return;
+      isProcessing = true;
+      try {
+        loginScreen.classList.add('active');
+        xmbContainer.classList.add('hidden');
+        if (currentGame) currentGame.stop();
+        document.getElementById('username').focus();
+      } catch (e) {
+        console.error('Login click error:', e.message);
+      }
+      isProcessing = false;
     });
 
     document.querySelector('.submenu-item[data-action="signout"]').addEventListener('click', () => {
-      token = null;
-      user = null;
-      snakeHighScore = 0;
-      platformerHighScore = 0;
-      updateUserUI();
-      document.querySelector('.xmb-item[data-menu="users"]').focus();
+      if (isProcessing) return;
+      isProcessing = true;
+      try {
+        token = null;
+        user = null;
+        snakeHighScore = 0;
+        platformerHighScore = 0;
+        localStorage.clear();
+        updateUserUI();
+        document.querySelector('.xmb-item[data-menu="users"]').focus();
+      } catch (e) {
+        console.error('Signout error:', e.message);
+      }
+      isProcessing = false;
     });
 
     document.querySelectorAll('.submenu-item[data-theme]').forEach(item => {
       item.addEventListener('click', () => {
-        if (user) {
+        if (isProcessing || !user) return;
+        isProcessing = true;
+        try {
           user.theme = item.dataset.theme;
           updateUserUI();
           saveUserData();
+        } catch (e) {
+          console.error('Theme change error:', e.message);
         }
+        isProcessing = false;
       });
-    });
-
-    document.querySelector('[data-setting="animations"]').addEventListener('click', () => {
-      if (user) {
-        user.animations = !user.animations;
-        updateUserUI();
-        saveUserData();
-      }
-    });
-
-    document.querySelector('[data-setting="fastMode"]').addEventListener('click', () => {
-      if (user) {
-        user.fastMode = !user.fastMode;
-        updateUserUI();
-        saveUserData();
-      }
-    });
-
-    document.querySelectorAll('.submenu-item[data-game]').forEach(item => {
-      item.addEventListener('click', () => {
-        if (currentGame) currentGame.stop();
-        if (item.dataset.game === 'snake') {
-          currentGame = new SnakeGame(user != null);
-          currentGame.start();
-        } else if (item.dataset.game === 'platformer') {
-          currentGame = new PlatformerGame(user != null);
-          currentGame.start();
-        }
-      });
-      item.addEventListener('keydown', (e) => {
+      item.addEventListener('keydown', e => {
+        if (isProcessing) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           item.click();
@@ -956,9 +900,51 @@
       });
     });
 
+    document.querySelector('[data-setting="fastMode"]').addEventListener('click', () => {
+      if (isProcessing || !user) return;
+      isProcessing = true;
+      try {
+        user.fastMode = !user.fastMode;
+        updateUserUI();
+        saveUserData();
+      } catch (e) {
+        console.error('Fast mode toggle error:', e.message);
+      }
+      isProcessing = false;
+    });
+
+    document.querySelectorAll('.submenu-item[data-game]').forEach(item => {
+      item.addEventListener('click', () => {
+        if (isProcessing) return;
+        isProcessing = true;
+        try {
+          if (currentGame) currentGame.stop();
+          currentGame = item.dataset.game === 'snake' ? new SnakeGame() : new PlatformerGame();
+          currentGame.start();
+        } catch (e) {
+          console.error('Game start error:', e.message);
+        }
+        isProcessing = false;
+      });
+      item.addEventListener('keydown', e => {
+        if (isProcessing) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          item.click();
+        }
+      });
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
     // Initialize
-    document.getElementById('users-submenu').classList.add('active', 'block');
-    loadUserData();
+    try {
+      setTimeout(() => document.getElementById('boot-screen').classList.add('hidden'), 2000);
+      document.getElementById('users-submenu').classList.add('active');
+      loadUserData();
+    } catch (e) {
+      console.error('Initialization error:', e.message);
+    }
   </script>
 </body>
 </html>
